@@ -22,7 +22,7 @@ class DataBase
 	
 	function DataBase($host, $user, $pass, $name)
 	{
-		$link = @mysql_connect($host, $user, $pass);
+		$link = @mysql_connect($host, $user, $pass, true);
 		if ($link)
 		{
 			$select = mysql_select_db($name, $link);
