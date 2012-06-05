@@ -1,0 +1,40 @@
+body
+{
+	background: #060606 url(../site/images/panel_bg.jpg) top repeat-x;
+	font-family: tahoma;
+	font-size: 10px;
+	line-height: 150%;
+}
+
+input
+{
+	font-family: tahoma;
+	font-size: 10px;
+}
+
+#main
+{
+	border: 1px #ccc solid;
+	padding: 15px;
+	width: 800px;
+	margin: 25px auto;
+	background: #fff url(../site/images/logo.jpg) top left no-repeat;
+	padding-top: 125px;
+}
+
+h1
+{
+	font-size: 20px;
+}
+
+h2
+{
+	font-size: 16px;
+}
+
+.error
+{
+	text-align: center;
+	margin: 10px 0;
+	color: red;
+}
