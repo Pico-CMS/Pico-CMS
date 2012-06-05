@@ -1,7 +1,7 @@
 <?php
 include('core.php');
 ob_start();
-
+// this is a test!
 if (CURRENT_ALIAS == 'login')
 {
 	// do nothing!
