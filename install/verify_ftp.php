@@ -15,7 +15,7 @@ $ftp->Verbose = FALSE;
 $ftp->LocalEcho = FALSE;
 if(!$ftp->SetServer($host, $port, TRUE)) {
 	$ftp->quit();
-	$ftp_error[] = "Seting server failed\n";
+	$ftp_error[] = "Setting server failed\n";
 }
 else
 {
