@@ -317,6 +317,9 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		$title   = nl2br($entry['title']);
 		//$date    = date('F j, Y', $entry['date']);
 		$edate   = date('F j, Y', $entry['date']);
+		$edate_d   = date('j', $entry['date']);
+		$edate_m   = date('F', $entry['date']);
+		$edate_y   = date('Y', $entry['date']);
 		$subpage = PageNameToAlias($title);
 		$link    = $body->url(CURRENT_ALIAS . '/' . $subpage);
 		$story   = $entry['post'];
@@ -394,6 +397,9 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		
 		$blog_entry = ($show_layout == 'full') ? $full_layout : $layout;
 		//$blog_entry = $full_layout;
+		$blog_entry = str_replace('DATE_DAY', $edate_d, $blog_entry);
+		$blog_entry = str_replace('DATE_MONTH', $edate_m, $blog_entry);
+		$blog_entry = str_replace('DATE_YEAR', $edate_y, $blog_entry);
 		$blog_entry = str_replace('DATE', $edate, $blog_entry);
 		$blog_entry = str_replace('ID', $entry['post_id'], $blog_entry);
 		$blog_entry = str_replace('TITLE', $title, $blog_entry);
