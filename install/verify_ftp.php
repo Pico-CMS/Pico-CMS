@@ -1,12 +1,18 @@
 <?php
 
-$ftp_ok    = FALSE;
 $port      = (int) $_POST['ftp']['port'];
 $username  = (string) $_POST['ftp']['username'];
 $password  = (string) $_POST['ftp']['password'];
 $path      = (string) $_POST['ftp']['path'];
 $host      = (string) $_POST['ftp']['host'];
+$ftp_ok	   = (string) $_POST['ftp']['ok'];
 $ftp_error = array();
+
+if($ftp_ok == "skip")
+{
+	$_SESSION['FTP_OK'] = TRUE;
+	$_SESSION['install_step'] = 2;
+}
 
 ob_start(); // surpress normal ftp class output
 
@@ -149,4 +155,5 @@ if ( (sizeof($ftp_error) == 0) and ($correct_path) )
 		'path' => $path,
 	);
 }
+
 ?>
