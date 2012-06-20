@@ -245,7 +245,7 @@ function GetContent($container, $page_id, $req_uri = '')
 				$inc_file = 'includes/content/'.$component_info['folder'].'/'.$component_options['content_file'];
 				if ((file_exists($inc_file)) and (!is_dir($inc_file)))
 				{
-					echo '<div id="box_'.$component_id.'">';
+					echo '<div id="box_'.$component_id.'" class="'.$component_info['folder'].'">';
 					if (USER_ACCESS > 2) { echo '<div class="content_box_bg"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
 					echo '<div class="header"></div>';
 					echo '<div class="content">';
@@ -1141,6 +1141,26 @@ function Pico_SubmitAuthnetPayment($total, $cc_num, $cc_month, $cc_year, $cc_ccv
 		$order_message .= 'Warning, this order was put on a PENDING status from Authorize.net! Please verify the transaction was completed before continuing! (Transaction id ' . $response[6] .')';
 		$order_success = TRUE;
 	}*/
+}
+
+function Pico_SendUserEmail($to, $subject, $message, $html = FALSE, $replyTo = null)
+{
+	require_once('includes/class.phpmailer.php');
+	
+	$mail = new PHPMailer();
+	$mail->From = ADMIN_EMAIL;
+	$mail->FromName = ADMIN_FROM;
+	
+	if ($replyTo != NULL)
+	{
+		$mail->AddReplyTo($replyTo);
+	}
+	
+	$mail->AddAddress($to);
+	$mail->IsHTML($html);
+	$mail->Subject = $subject;
+	$mail->Body    = $message;
+	$mail->Send();
 }
 
 ?>
