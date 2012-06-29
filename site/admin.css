@@ -326,3 +326,30 @@ table.admin_list tr.b td
 {
 	background: #cccccc;
 }
+
+#ap_content h1
+{
+	font-size: 20px;
+	color: #000;
+	font-weight: bold;
+	margin: 10px 0;
+	font-family: Arial, Verdana, sans-serif;
+}
+
+#ap_content h2
+{
+	font-size: 18px;
+	color: #000;
+	font-weight: bold;
+	margin: 10px 0;
+	font-family: Arial, Verdana, sans-serif;
+}
+
+#ap_content h3
+{
+	font-size: 16px;
+	color: #000;
+	font-weight: bold;
+	margin: 10px 0;
+	font-family: Arial, Verdana, sans-serif;
+}
