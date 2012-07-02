@@ -116,5 +116,5 @@ DROP TABLE IF EXISTS `PREFIX_pico_settings`;
 >
 CREATE TABLE `PREFIX_pico_settings` (
 	`keyfield` varchar(32) NOT NULL,
-	`keyvalue` varchar(255)
+	`keyvalue` TEXT
 );
