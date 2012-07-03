@@ -196,7 +196,7 @@ foreach ($search_words as $word)
 	}
 
 	// go through directory
-
+	
 	$directories = $db->force_multi_assoc('SELECT `component_id` FROM `'.DB_COMPONENT_TABLE.'` WHERE `folder`=?', 'directory');
 	if ( (is_array($directories)) and (sizeof($directories) > 0) )
 	{
@@ -298,7 +298,6 @@ foreach ($search_words as $word)
 			}
 		}
 	}
-
 }
 
 usort($all_results, 'sort_search_results');
@@ -307,8 +306,9 @@ usort($all_results, 'sort_search_results');
 
 if (sizeof($all_results) > 0)
 {
-	$results = (sizeof($all_results) == 1) ? 'result' : 'results';
-	echo 'Found ' . sizeof($all_results) . ' ' . $results;
+	
+	$output = '';
+	$num_results = 0;
 	
 	foreach ($all_results as $result)
 	{
@@ -359,12 +359,22 @@ if (sizeof($all_results) > 0)
 				}
 			}
 		}
-	
-		echo '<div class="result">
-			<div class="title"><a href="'.$result['url'].'">'.$result['page_name'].'</a></div>
-			<div class="blurb">...'.$result_string.'...</div>
-		</div>';
+		
+		if (strlen($result_string) > 0)
+		{
+			$num_results++;
+			$output .= '<div class="result">
+				<div class="title"><a href="'.$result['url'].'">'.$result['page_name'].'</a></div>
+				<div class="blurb">...'.$result_string.'...</div>
+			</div>';
+		
+		}
 	}
+	
+	$results = ($num_results == 1) ? 'result' : 'results';
+	echo 'Found ' . $num_results. ' ' . $results;
+	
+	echo $output;
 }
 
 
