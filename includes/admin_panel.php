@@ -23,7 +23,7 @@ $clone  = (USER_ACCESS > 2) ? '<span class="click" onclick="Pico_ClonePage()">Cl
 $bulk   = (USER_ACCESS > 4) ? '<span class="click" onclick="Pico_BulkClonePage()">Bulk Add Pages</span>' : '<span class="inactive">Bulk Add Pages</span>';
 $sh     = (USER_ACCESS > 3) ? '<span class="click" onclick="Pico_SiteHeirarchy()">Site Hierarchy</span>' : '<span class="inactive">Site Hierarchy</span>';
 $bulkc  = (USER_ACCESS > 4) ? '<span class="click" onclick="Pico_BulkAddContent()">Bulk Add Content</span>' : '<span class="inactive">Bulk Add Content</span>';
-$payment = (USER_ACCESS > 3) ? '<span class="click" onclick="Pico_PaymentSettings()">Payment Settings</span>' : '<span class="inactive">Payment Settings</span>';
+//$payment = (USER_ACCESS > 3) ? '<span class="click" onclick="Pico_PaymentSettings()">Payment Settings</span>' : '<span class="inactive">Payment Settings</span>';
 
 $content_add_new      = (USER_ACCESS > 3) ? '<div class="click" onclick="Pico_ToggleAddContent(0)">Add New Content</div>'      : '<div class="inactive">Add New Content</div>';
 $content_add_existing = (USER_ACCESS > 3) ? '<div class="click" onclick="Pico_ToggleAddContent(1)">Add Existing Content</div>' : '<div class="inactive">Add Existing Content</div>';
@@ -62,7 +62,6 @@ $content_move         = (USER_ACCESS > 3) ? '<div class="click" onclick="Pico_To
 			</ul>
 			<ul>
 				<li><?=$bulkc?></li>
-				<li><?=$payment?></li>
 			</ul>
 		</div>
 		<div id="lap_users">
@@ -89,8 +88,8 @@ $content_move         = (USER_ACCESS > 3) ? '<div class="click" onclick="Pico_To
 				<div class="clear title menu_item"><img src="<?=$body->url('/includes/icons/help.png')?>" class="icon" align="left" /><a target="_blank" href="<?=$body->url('help.pdf')?>">Help</a></div>
 			</td>
 			<td valign="top" width="50%">
-				<div class="clear title menu_item"><img src="<?=$body->url('/includes/icons/info.png')?>" class="icon" align="left" /><div class="click" onclick="Pico_FTPSettings()">FTP Settings</div></div>
-				<div class="clear title menu_item"><img src="<?=$body->url('/includes/icons/edit.png')?>" class="icon" align="left" /><div class="click" onclick="Pico_Update()">Check for updates</div></div>
+				<div class="clear title menu_item"><img src="<?=$body->url('/includes/icons/info.png')?>" class="icon" align="left" /><div class="click" onclick="Pico_Settings()">Pico Settings</div></div>
+				<div class="clear title menu_item"><img src="<?=$body->url('/includes/icons/edit.png')?>" class="icon" align="left" /><div class="click" onclick="Pico_Update()">Pico Updates</div></div>
 			</td>
 		</tr>
 		</table>

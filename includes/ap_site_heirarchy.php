@@ -50,6 +50,13 @@ if ( (sizeof($page_data) > 0) and (is_array($page_data)) )
 	}
 }
 
+// custom pages/areas
+if (!in_array(-1, $all_items))
+{
+	// add "log in/out" special link
+	$pages[-1] = '* Log In/Out';
+}
+
 // now we can build a dropdown of available pages
 
 $page_dropdown = '<select name="page_ids[]" multiple="multiple" size="20" style="width: 250px">';

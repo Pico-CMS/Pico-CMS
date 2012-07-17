@@ -24,4 +24,5 @@ $options['edit_options'] = array(
 		'access'=>4
 	),
 ); // for custom options while editing
+// making a change
 ?>

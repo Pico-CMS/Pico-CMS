@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS `$blog_options` (
 	`show_short_layout` BLOB,
 	`show_bottom_nav` TINYINT(1) NOT NULL DEFAULT 0,
 	`image_settings` BLOB,
+	`author` VARCHAR(255),
+	`by_line` TEXT,
+	`image_caption` TEXT,
 	PRIMARY KEY(`component_id`));
 SQL
 );
@@ -48,6 +51,7 @@ CREATE TABLE IF NOT EXISTS `$blog_entries` (
 	`last_saved_date` BIGINT(11),
 	`last_saved_post` longtext,
 	`story_image` VARCHAR(255),
+	`by_line` TEXT,
 	PRIMARY KEY(`post_id`));
 SQL
 );
@@ -174,6 +178,21 @@ if (!in_array('story_image', $all_fields))
 if (!in_array('published', $all_fields))
 {
 	$db->run('ALTER TABLE `'.$blog_entries.'` ADD COLUMN `published` TINYINT(1) NOT NULL DEFAULT 1');
+}
+
+if (!in_array('by_line', $all_fields))
+{
+	$db->run('ALTER TABLE `'.$blog_entries.'` ADD COLUMN `by_line` TEXT');
+}
+
+if (!in_array('author', $all_fields))
+{
+	$db->run('ALTER TABLE `'.$blog_entries.'` ADD COLUMN `author` VARCHAR(255)');
+}
+
+if (!in_array('image_caption', $all_fields))
+{
+	$db->run('ALTER TABLE `'.$blog_entries.'` ADD COLUMN `image_caption` TEXT');
 }
 
 // check blog categories table

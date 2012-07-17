@@ -1046,4 +1046,14 @@ if ($action == 'export_profile_users')
 	
 	$xls->output();
 }
+
+if ($action == 'settings')
+{
+	$settings = $_POST['settings'];
+	
+	foreach ($settings as $key=>$val)
+	{
+		Pico_Setting($key, $val);
+	}
+}
 ?>

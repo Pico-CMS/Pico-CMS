@@ -85,7 +85,7 @@ $image_settings = unserialize($options['image_settings']);
 	<td>
 		<textarea name="full_layout" class="ap_textarea_lg"><?=htmlspecialchars($options['full_layout'])?></textarea><br />
 		Variables:<br />
-		DATE, STORY, TITLE, CATEGORY, TAGS, LINK, TOGGLE_COMMENTS, COMMENTS, NUM_COMMENTS<br />
+		DATE/{DATE}, STORY, TITLE, CATEGORY, TAGS, LINK, TOGGLE_COMMENTS, COMMENTS, NUM_COMMENTS, AUTHOR, BY_LINE, CAPTION, IMAGE<br />
 	</td>
 </tr>
 <tr>
@@ -111,7 +111,7 @@ $image_settings = unserialize($options['image_settings']);
 	<td>
 		<textarea name="comment_layout" class="ap_textarea_lg"><?=$options['comment_layout']?></textarea><br />
 		Variables:<br />
-		NAME, DATE, EMAIL, MESSAGE
+		NAME, DATE/{DATE}, EMAIL, MESSAGE, REPLY
 	</td>
 </tr>
 

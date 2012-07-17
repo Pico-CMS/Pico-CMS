@@ -353,3 +353,52 @@ table.admin_list tr.b td
 	margin: 10px 0;
 	font-family: Arial, Verdana, sans-serif;
 }
+
+div.setting_icon
+{
+ float: left;
+ width: 96px;
+ padding: 5px;
+ background: #fff;
+ margin: 2px;
+ border: 1px #000 solid;
+ height: 25px;
+ padding-top: 70px;
+ text-align: center;
+ cursor: pointer;
+}
+
+#update_status
+{
+ border: 1px #000 dashed;
+ padding: 5px;
+ font-size: 10px;
+ background: #fff;
+ height: 140px;
+ overflow: auto;
+}
+
+.can_update
+{
+ background: #bbde9c;
+ padding: 3px;
+ margin-bottom: 5px;
+}
+
+.no_update
+{
+ background: #e494ac;
+ padding: 3px;
+ margin-bottom: 5px;
+}
+
+.no_update .click
+{
+ color: blue;
+}
+
+.bad_files
+{
+ background: #fff;
+ padding: 3px;
+}

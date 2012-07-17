@@ -79,6 +79,18 @@ HTML;
 			<td colspan="2"><input type="text" class="ap_text" name="title" value="<?=$entry_info['title']?>" /></td>
 		</tr>
 		<tr>
+			<td>Secondary Title</td>
+			<td colspan="2"><input type="text" class="ap_text" name="by_line" value="<?=$entry_info['by_line']?>" /></td>
+		</tr>
+		<tr>
+			<td>Author</td>
+			<td colspan="2"><input type="text" class="ap_text" name="author" value="<?=$entry_info['author']?>" /></td>
+		</tr>
+		<tr>
+			<td>Image Caption</td>
+			<td colspan="2"><input type="text" class="ap_text" name="image_caption" value="<?=$entry_info['image_caption']?>" /></td>
+		</tr>
+		<tr>
 			<td>Date</td>
 			<td colspan="2"><input type="text" class="ap_text" name="date" value="<?=date('m/d/Y', $entry_info['date'])?>" /></td>
 		</tr>

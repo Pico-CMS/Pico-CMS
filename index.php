@@ -1,12 +1,8 @@
 <?php
 include('core.php');
 ob_start();
-// this is a test!
-if (CURRENT_ALIAS == 'login')
-{
-	// do nothing!
-}
-elseif (CURRENT_ALIAS == 'logout')
+
+if (CURRENT_ALIAS == 'logout')
 {
 	include('includes/logout.php');
 }
@@ -27,7 +23,6 @@ elseif (CURRENT_ALIAS == 'help')
 else
 {
 	// find the page
-	//echo '<pre>'.print_r($params, TRUE).'</pre>';
 	if (defined('CURRENT_PAGE'))
 	{
 		// get all the groups this user is in
@@ -64,9 +59,6 @@ else
 				}
 			}
 			
-			//echo ($user_is_in_group) ? 'YES' : 'NO';
-			//echo '<pre>'.print_r($user_is_in_group, TRUE).'</pre>';
-			
 			// process the page theme and output it, output will get grabbed by the OB
 			$body->title = (strlen($page_details['www_title']) > 0) ? $page_details['www_title'] : $page_details['name'];
 			if ((USER_ACCESS >= $page_details['user_access']) or ($user_is_in_group))
@@ -81,7 +73,21 @@ else
 			}
 			else
 			{
-				//echo 'in';
+				$current_login_page = Pico_Setting('pico_login_page');
+				if (!is_numeric($current_login_page)) { $current_login_page = 0; }
+				
+				if ($current_login_page != 0)
+				{
+					// make sure this page exists
+					$page_info = $db->assoc('SELECT * FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $current_login_page);
+					if (is_array($page_info))
+					{
+						$alias = $page_info['alias'];
+						$redirect = $body->url($alias);
+						header('Location: '  . $redirect);
+						exit(); // redirect user to the saved page
+					}
+				}
 				include('includes/login.php');
 			}
 		}
@@ -106,6 +112,28 @@ if (defined('STATIC_HTML'))
 	exit();
 }
 
+// define google analytics
+
+if (Pico_Setting('use_google_analytics') == 1)
+{
+	$ua_code = Pico_Setting('ga_code');
+	$google_anayltics = <<<HTML
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("$ua_code1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+HTML;
+}
+elseif (file_exists('google.src'))
+{
+	$google_anayltics = file_get_contents('google.src');
+}
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -122,7 +150,8 @@ if (defined('STATIC_HTML'))
 	<script type="text/javascript" src="<?=$body->url('site/javascript.php' . ((USER_ACCESS > 2) ? '?mode=reload' : ''))?>"></script>
 	<meta name="description" content="<?=$page_details['description']?>" />
 	<meta name="keywords" content="<?=$page_details['keywords']?>" />
-<?=$body->get_head()?>
+	<?=Pico_Setting('html_head')?>
+	<?=$body->get_head()?>
 </head>
 <body>
 <?=$normal_output?>
@@ -144,6 +173,7 @@ if (USER_ACCESS > 2)
 <?php
 }
 ?>
-<?php if (file_exists('google.src')) { echo file_get_contents('google.src'); } ?>
+<?php if (isset($google_anayltics)) { echo $google_anayltics; } ?>
+<?=Pico_Setting('html_body')?>
 </body>
 </html>

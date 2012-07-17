@@ -55,7 +55,7 @@ if ($action == 'start_post')
 		$date_ts = strtotime($date);
 		$alias   = PageNameToAlias($title);
 		
-		$new_story = $db->insert('INSERT INTO `'.$blog_entries.'` (`component_id`, `date`, `title`, `tags`, `post`, `category`, `alias`,`published`) VALUES (?,?,?,?,?,?,?,?)', 
+		$new_story = $db->insert('INSERT INTO `'.$blog_entries.'` (`component_id`, `date`, `title`, `tags`, `post`, `category`, `alias`, `published`) VALUES (?,?,?,?,?,?,?,?)', 
 			$component_id, $date_ts, $title, '', '', 0, $alias, 0
 		);
 		exit('0|'.$new_story);
@@ -91,6 +91,9 @@ elseif ( ($action == 'edit_story') or ($action == 'publish') )
 	$entry_id     = $_POST['entry_id'];
 	$published      = ($_POST['published'] == 1) ? 1 : 0;
 	$allow_comments = ($_POST['allow_comments'] == 1) ? 1 : 0;
+	$author         = trim(stripslashes($_POST['author']));
+	$by_line        = trim(stripslashes($_POST['by_line']));
+	$caption        = trim(stripslashes($_POST['image_caption']));
 	
 	if ($action == 'publish')
 	{
@@ -116,8 +119,8 @@ elseif ( ($action == 'edit_story') or ($action == 'publish') )
 	
 	$allow_comments  = (isset($_POST['allow_comments'])) ? $_POST['allow_comments'] : 0;
 	
-	$update_story = $db->run('UPDATE `'.$blog_entries.'` SET `date`=?, `saved_date`=?, `tags`=?, `post`=?, `category`=?, `published`=?, `allow_comments`=?, `last_saved_post`=?, `last_saved_date`=? WHERE `post_id`=?',
-		$date, time(), $tags, $story, $_POST['category'], $published, $allow_comments, $last_saved_post, $last_saved_date, $entry_id
+	$update_story = $db->run('UPDATE `'.$blog_entries.'` SET `date`=?, `saved_date`=?, `tags`=?, `post`=?, `category`=?, `published`=?, `allow_comments`=?, `last_saved_post`=?, `last_saved_date`=?, `author`=?, `by_line`=?, `image_caption`=? WHERE `post_id`=?',
+		$date, time(), $tags, $story, $_POST['category'], $published, $allow_comments, $last_saved_post, $last_saved_date, $author, $by_line, $caption, $entry_id
 	);
 	
 	// change title (if needed)

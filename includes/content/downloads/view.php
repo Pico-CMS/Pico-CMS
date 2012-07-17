@@ -28,9 +28,14 @@ if ( (is_array($files)) and (sizeof($files) > 0) ){
 		$link = $body->url('includes/content/downloads/download.php?id='.$file['file_id']);
 		//$line = '<li><table border="0" cellpadding="0" cellspacing="0"><tr><td>'.$extra.'</td><td>Catalog Number: '.$i.' - </td></tr></table></li>';
 		
-		$line = '<li>'.$file['html_description'].'
-			<table border="0" cellpadding="1" cellspacing="1"><tr><td>'.$extra.'</td><td>'.$file['file_name'].'</td><td><a href="'.$link.'">[download]</a></td></tr></table>';
-		echo $line;	
+		/*$line = '<li>'.$file['html_description'].'
+			<table border="0" cellpadding="1" cellspacing="1"><tr><td>'.$extra.'</td><td>'.$file['file_name'].'</td><td></td></tr></table>';
+		echo $line;	*/
+		
+		$more = (strlen($file['html_description']) > 0) ? '<div class="more">'.$file['html_description'].'</div>' : '';
+		
+		$line = '<li><span class="desc">'.$i.' '.$more.'</span> <span class="link"><a href="'.$link.'">[download]</a></li></span>';
+		echo $line;
 	}
 echo '</ul>';
 }?>

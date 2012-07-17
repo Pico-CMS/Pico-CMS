@@ -10,7 +10,7 @@ $options['admin_js'] = 'admin.js'; // same as static, but if logged in as modera
 $options['admin_css'] = 'admin.css'; // same as static, but if logged in as moderator or higher
 $options['delete_file'] = ''; // file that will be called in addition to removing the component from the content-links table
 $options['install_file'] = ''; // file that will be called after initally installing the component (good time to gather required information for your component, or create an SQL table if needed)
-$options['on_ap_close'] = 'if (CKEDITOR.instances.dl_html_desc) { CKEDITOR.instances.dl_html_desc.destroy(); }'; 
+$options['on_ap_close'] = 'DL_Close()'; 
 /*
 $options['edit_options'] = array(
 	array(

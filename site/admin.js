@@ -321,6 +321,34 @@ function Pico_AddProfileField(form)
 	}} );
 }
 
+function Pico_Settings()
+{
+	Pico_DisplayAP(url('includes/ap_settings.php'), 'Pico Settings', 346, 242);
+}
+
+function Pico_SettingsSection(section)
+{
+	Pico_DisplayAP(url('includes/ap_settings.php?section='+urlencode(section)), 'Pico Settings', 800, 500);
+}
+
+function Pico_SaveSettings(form)
+{
+	var submit_btn = form.elements.submit_btn;
+	submit_btn.disabled = true;
+	
+	new Ajax.Form(form, { onComplete: function(t) {
+		if (t.responseText.length > 0)
+		{
+			alert(t.responseText);
+		}
+		else
+		{
+			alert('Settings Saved');
+		}
+		submit_btn.disabled = false;
+	} } );
+}
+
 function Pico_PaymentSettings()
 {
 	Pico_DisplayAP(url('includes/ap_payment_settings.php'), 'Payment Settings', 800, 500);
@@ -516,21 +544,46 @@ function Pico_AddPage()
 	Pico_DisplayAP(url('includes/ap_pages.php'), 'Add Page', 400, 500);
 }
 
-function Pico_FTPSettings()
-{
-	Pico_DisplayAP(url('includes/ap_ftp.php'), 'FTP Settings', 200, 200);
-}
-
 function Pico_Update()
 {
 	Pico_DisplayAP(url('includes/ap_update.php'), 'Update Pico', 500, 300);
 }
 
-function Pico_SaveFTP(form)
+function Pico_CheckForUpdates()
 {
+	var target_url = url('includes/update_check.php');
+	new Ajax.Updater('update_status', target_url);
+}
+
+function Pico_PerformUpdate(form)
+{
+	alert('Pico will now begin the update process. Please allow a few minutes for this to complete. Do not close this window or your browser');
+	form.elements.submit_btn.disabled = true;
 	new Ajax.Form(form, { onComplete: function(t) {
-		alert(t.responseText);
+		if (t.responseText.length > 0)
+		{
+			alert('Error updating Pico: ' + t.responseText);
+		}
+		else
+		{
+			Pico_CloseAP();
+			alert('Update Complete');
+		}
+		form.elements.submit_btn.disabled = false;
 	} } );
+}
+
+function Pico_ShowBadFiles(id)
+{
+	var obj = document.getElementById('bad_files_'+id);
+	if (obj.style.display != 'block')
+	{
+		obj.style.display = 'block';
+	}
+	else
+	{
+		obj.style.display = 'none';
+	}
 }
 
 function Pico_ShowPanel(panel)

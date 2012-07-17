@@ -245,7 +245,7 @@ function GetContent($container, $page_id, $req_uri = '')
 				$inc_file = 'includes/content/'.$component_info['folder'].'/'.$component_options['content_file'];
 				if ((file_exists($inc_file)) and (!is_dir($inc_file)))
 				{
-					echo '<div id="box_'.$component_id.'" class="'.$component_info['folder'].'">';
+					echo '<div id="box_'.$component_id.'" class="content_'.$component_info['folder'].'">';
 					if (USER_ACCESS > 2) { echo '<div class="content_box_bg"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
 					echo '<div class="header"></div>';
 					echo '<div class="content">';
@@ -487,19 +487,33 @@ function generate_text($length = 8)
 	return $phrase;
 }
 
-function PicoSetting($field, $value = null)
+function Pico_Setting($field, $value = null)
 {
 	global $db;
 	if ($value == null)
 	{
 		// get value
 		$return = $db->result('SELECT `keyvalue` FROM `'.PICO_SETTINGS.'` WHERE `keyfield`=?', $field);
+		
+		$check = unserialize($return);
+		if (is_array($check)) { $return = $check; }
+		
 		return $return;
 	}
 	else
 	{
 		// set value
 		$check = $db->result('SELECT count(1) FROM `'.PICO_SETTINGS.'` WHERE `keyfield`=?', $field);
+		
+		if (is_string($value))
+		{
+			$value = trim(stripslashes($value));
+		}
+		elseif (is_array($value))
+		{
+			$value = serialize($value);
+		}
+		
 		if ($check == 1)
 		{
 			$db->run('UPDATE `'.PICO_SETTINGS.'` SET `keyvalue`=? WHERE `keyfield`=?', $value, $field);
@@ -525,11 +539,11 @@ function SortSelectOptions($a, $b)
 function Pico_ConnectFTP()
 {
 	// get ftp settings
-	$ftp_host = PicoSetting('host');
-	$ftp_port = (int) PicoSetting('port');
-	$ftp_path = PicoSetting('path');
-	$ftp_user = PicoSetting('username');
-	$ftp_pass = PicoSetting('password');
+	$ftp_host = Pico_Setting('host');
+	$ftp_port = (int) Pico_Setting('port');
+	$ftp_path = Pico_Setting('path');
+	$ftp_user = Pico_Setting('username');
+	$ftp_pass = Pico_Setting('password');
 	require_once('includes/ftp/ftp_class.php');
 	
 	ob_start(); // surpress normal ftp class output
@@ -690,7 +704,12 @@ function SiteHeirarchyDisplay($data)
 			
 			if (!isset($item['sub_link']))
 			{
-				if ($info['page_id'] != 0)
+				if ($info['page_id'] == -1)
+				{
+					// for custom log in/out link
+					$name = '* Log In/Out';
+				}
+				elseif ($info['page_id'] != 0)
 				{
 					// page
 					$name = $db->result('SELECT `name` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $info['page_id']);
@@ -1143,6 +1162,20 @@ function Pico_SubmitAuthnetPayment($total, $cc_num, $cc_month, $cc_year, $cc_ccv
 	}*/
 }
 
+function Pico_QueryUpdateServer($post_data)
+{
+	$post_url = 'http://update-server.pico-cms.net/remote_update.php';
+	$ch       = curl_init(); // initialize curl handle
+    curl_setopt($ch, CURLOPT_URL,$post_url); // set url to post to
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER,1); // return into a variable
+	curl_setopt($ch, CURLOPT_POST, 1); // set POST method
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data); // add POST fields
+	$output = curl_exec($ch); // run the whole process
+    curl_close($ch); 
+	
+	return $output;
+}
+
 function Pico_SendUserEmail($to, $subject, $message, $html = FALSE, $replyTo = null)
 {
 	require_once('includes/class.phpmailer.php');
@@ -1162,5 +1195,4 @@ function Pico_SendUserEmail($to, $subject, $message, $html = FALSE, $replyTo = n
 	$mail->Body    = $message;
 	$mail->Send();
 }
-
 ?>

@@ -1,4 +1,14 @@
 <?php
+
+if ($_GET['refresh'] == 1)
+{
+	$instance_id = $_GET['instance_id'];
+	chdir('../../../');
+	require_once('core.php');
+}
+
+if ( (USER_ACCESS < 3) or (!defined('USER_ACCESS')) ) { exit(); }
+
 $download_files = DB_PREFIX . 'download_files';
 $sql = $db->run(<<<SQL
 CREATE TABLE IF NOT EXISTS `$download_files` (
@@ -12,39 +22,17 @@ CREATE TABLE IF NOT EXISTS `$download_files` (
 	PRIMARY KEY(`file_id`));
 SQL
 );
-$swf_path = $body->url('includes/content/downloads/FileUploader.swf');
-$upload_path = $body->url('includes/content/downloads/upload.php');
-$fv = array();
 
-$fv['uploadType'] = 'all'; // all, text, video, image
-$fv['fileCallback'] = 'DL_FileUploaded';
-$fv['filesCallback'] = 'DL_FilesUploaded';
-$fv['uploadPath'] = $upload_path;
-$p = array();
-foreach($fv as $key=>$val)
-{
-	$val = urlencode($val);
-	$p[] = "$key=$val";
-}
-$fvText = implode('&', $p);
+$upload_path = $body->url('includes/upload.php');
+$uploader = new Uploader($upload_path, 'DL_FileUploaded', 'DL_FilesUploaded', '.*', 'All Files', '000000', 'ffffff');
+
 ?>
 <input type="hidden" id="instance_id" value="<?=$instance_id?>" />
 <input type="hidden" id="component_id" value="<?=$component_id?>" />
-<div id="file_list">
-<?php include('includes/content/downloads/file_list.php'); ?>
+<div class="ap_overflow" id="file_list">
+	<h3>Upload New File</h3>
+	<?=$uploader->Output()?>
+	<h3>Existing Files</h3>
+	<?php include('includes/content/downloads/file_list.php'); ?>
 </div>
-<div id="file_upload">
-<object classid="clsid:d27cdb6e-ae6d-11cf-96b8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=8,0,0,0" width="500" height="100" id="live_preview" align="middle">
-	<param name="allowScriptAccess" value="sameDomain" />
-	<param name="allowFullScreen" value="false" />
-	<param name="movie" value="<?=$swf_path?>" />
-	<param name="loop" value="false" />
-	<param name="menu" value="false" />
-	<param name="quality" value="high" />
-	<param name="wmode" value="transparent" />
-	<param name="flashvars" value="<?=$fvText?>" />
-	<embed src="<?=$swf_path?>" flashvars="uploadPath=<?=$fvText?>" loop="false" menu="false" quality="high" wmode="transparent" width="500" height="100" name="live_preview" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />
-</object>
-</div>
-<br />
-<button onclick="DL_Close()">Close</button>
+<!--button onclick="DL_Close()">Close</button-->

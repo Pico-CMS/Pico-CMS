@@ -323,6 +323,9 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		$subpage = PageNameToAlias($title);
 		$link    = $body->url(CURRENT_ALIAS . '/' . $subpage);
 		$story   = $entry['post'];
+		$author  = $entry['author'];
+		$by_line = $entry['by_line'];
+		$caption = $entry['image_caption'];
 		
 		$tag_data = unserialize($entry['tags']);
 		if (sizeof($tag_data) > 0)
@@ -351,7 +354,7 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 			$comments .= '<div id="comment_container_'.$post_id.'">';
 			$comments .= get_blog_comments($post_id, $comment_layout);
 			$comments .= '</div>';
-			$comments .= '<div class="bold click" onclick="ToggleComment('.$post_id.')">Add a comment</div>';
+			$comments .= '<div class="bold click add_comment" onclick="ToggleComment('.$post_id.')">Add a comment</div>';
 			
 			$keyphrase = generate_text(5);
 			$pass      = encrypt($keyphrase);
@@ -376,7 +379,7 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 			
 			// new comment form
 			
-			$comments = '<div class="comment_hide" id="comment_show_'.$post_id.'">'.$comments.'</div>';
+			$comments = '<div class="comment_container" id="comment_show_'.$post_id.'">'.$comments.'</div>';
 		}
 		else
 		{
@@ -396,6 +399,14 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		//echo $d
 		
 		$blog_entry = ($show_layout == 'full') ? $full_layout : $layout;
+		
+		preg_match('/\{DATE,([^\}]+)\}/', $blog_entry, $matches);
+		if (isset($matches[1]))
+		{
+			$format = $matches[1];
+			$date   = date($format, $entry['date']);
+			$blog_entry = preg_replace('/\{DATE,[^\}]+}/', $date, $blog_entry);
+		}
 		//$blog_entry = $full_layout;
 		$blog_entry = str_replace('DATE_DAY', $edate_d, $blog_entry);
 		$blog_entry = str_replace('DATE_MONTH', $edate_m, $blog_entry);
@@ -405,6 +416,10 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		$blog_entry = str_replace('TITLE', $title, $blog_entry);
 		$blog_entry = str_replace('CATEGORY', $category, $blog_entry);
 		$blog_entry = str_replace('TAGS', $tags, $blog_entry);
+		$blog_entry = str_replace('AUTHOR', $author, $blog_entry);
+		$blog_entry = str_replace('BY_LINE', $by_line, $blog_entry);
+		$blog_entry = str_replace('CAPTION', $caption, $blog_entry);
+		$blog_entry = str_replace('SHARETHIS', Pico_Setting('share_this'), $blog_entry);
 		
 		
 		// get next,prev

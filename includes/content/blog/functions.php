@@ -149,6 +149,15 @@ function get_blog_comments($post_id, $layout, $parent = 0, $all = false)
 			
 			$_entry = $layout;
 			$_entry = str_replace('NAME', $name, $_entry);
+			
+			preg_match('/\{DATE,([^\}]+)\}/', $_entry, $matches);
+			if (isset($matches[1]))
+			{
+				$format = $matches[1];
+				$date   = date($format, $comment['date']);
+				$_entry = preg_replace('/\{DATE,[^\}]+}/', $date, $_entry);
+			}
+			
 			$_entry = str_replace('DATE', $date, $_entry);
 			$_entry = str_replace('MESSAGE', $message, $_entry);
 			$_entry = str_replace('REPLY', '<span class="click" onclick="Blog_Reply('.$post_id.', '.$comment['comment_id'].')">Reply</span>', $_entry);
