@@ -1,12 +1,18 @@
 <?php
 
-$ftp_ok    = FALSE;
 $port      = (int) $_POST['ftp']['port'];
 $username  = (string) $_POST['ftp']['username'];
 $password  = (string) $_POST['ftp']['password'];
 $path      = (string) $_POST['ftp']['path'];
 $host      = (string) $_POST['ftp']['host'];
+$ftp_ok	   = (string) $_POST['ftp']['ok'];
 $ftp_error = array();
+
+if($ftp_ok == "skip")
+{
+	$_SESSION['FTP_OK'] = TRUE;
+	$_SESSION['install_step'] = 2;
+}
 
 ob_start(); // surpress normal ftp class output
 
@@ -15,7 +21,7 @@ $ftp->Verbose = FALSE;
 $ftp->LocalEcho = FALSE;
 if(!$ftp->SetServer($host, $port, TRUE)) {
 	$ftp->quit();
-	$ftp_error[] = "Seting server failed\n";
+	$ftp_error[] = "Setting server failed\n";
 }
 else
 {
@@ -67,117 +73,63 @@ if (!isset($error))
 		
 		if ($correct_path)
 		{
-			if (!$ftp->chmod('upload', 0777))
+			$writable_folders = array(
+				'upload',
+				'includes',
+				'includes/content/blog/storage',
+				'includes/content/external_newsletter/buttons',
+				'includes/content/media/upload',
+				'includes/content/media/files',
+				'includes/content/media/galleries/enhanced_fader/files',
+				'includes/content/media/galleries/marquee/files',
+				'includes/content/media/galleries/multiple/files',
+				'includes/content/media/galleries/slide/files',
+				'includes/content/media/galleries/portfolio/files',
+				'includes/content/media/galleries/simple/files',
+				'includes/content/media/galleries/plain_img/files',
+				'includes/content/media/galleries/horizontal_menu/files',
+				'includes/content/media/galleries/grid_ajax/files',
+				'includes/content/media/galleries/pane_viewer/files',
+				'includes/content/media/galleries/project/files',
+				'includes/content/media/galleries/jscript/files',
+				'includes/content/linkmenu/fonts',
+				'includes/content/contact/upload',
+				'includes/content/contact/storage',
+				'includes/content/contact/storage/buttons',
+				'includes/uploader/thumbnails',
+				'includes/uploader/tmp',
+				'includes/tmp',
+			);
+			
+			$writable_files = array(
+				'includes/config.blank.php',
+				'site/javascript.cache',
+				'.htaccess',
+			);
+			
+			foreach ($writable_folders as $folder)
 			{
-				$ftp_error[] = "Error chmod'ing upload folder\n";
+				if (!is_dir($folder))
+				{
+					// make the dir
+					if (!$ftp->mkdir($folder))
+					{
+						$ftp_error[] = 'Error creating folder: ' .$folder;
+					}
+				}
+				
+				if (!$ftp->chmod($folder, 0777))
+				{
+					$ftp_error[] = 'Unable to CHMOD '.$folder;
+				}
 			}
-			if (!$ftp->chmod('includes', 0777))
+			
+			foreach ($writable_files as $file)
 			{
-				$ftp_error[] = "Error chmod'ing includes folder\n";
-			}
-			if (!$ftp->chmod('includes/content/blog/storage', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing blog storage folder\n";
-			}
-			if (!$ftp->chmod('includes/content/external_newsletter/buttons', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing external newsletter buttons\n";
-			}
-			if (!$ftp->chmod('includes/content/media/upload', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing media upload folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing media files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/enhanced_fader/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing enhanced fader files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/marquee/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing marquee files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/multiple/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing multiple files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/slide/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing slide files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/portfolio/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing portfolio files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/simple/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing simple files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/plain_img/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing plain img files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/horizontal_menu/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing horizontal menu files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/grid_ajax/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing horizontal menu files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/pane_viewer/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing horizontal menu files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/project/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing horizontal menu files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/media/galleries/jscript/files', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing horizontal menu files folder\n";
-			}
-			if (!$ftp->chmod('includes/content/linkmenu/fonts', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing linkmenu fonts folder\n";
-			}
-			if (!$ftp->chmod('includes/content/contact/upload', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing contact upload folder\n";
-			}
-			if (!$ftp->chmod('includes/content/contact/storage', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing contact storage folder\n";
-			}
-			if (!$ftp->chmod('includes/content/contact/storage/buttons', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing contact button upload folder\n";
-			}
-			if (!$ftp->chmod('includes/config.blank.php', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing config file\n";
-			}
-			if (!$ftp->chmod('site/javascript.cache', 0666))
-			{
-				$ftp_error[] = "Error javascript cache file\n";
-			}
-			if (!$ftp->chmod('includes/uploader/thumbnails', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing uploader thumbnails folder\n";
-			}
-			if (!$ftp->chmod('includes/uploader/tmp', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing uploader tmp folder\n";
-			}
-			if (!$ftp->chmod('includes/tmp', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing tmp folder\n";
-			}
-			if (!$ftp->chmod('.htaccess', 0777))
-			{
-				$ftp_error[] = "Error chmod'ing htacces install file\n";
+				if (!$ftp->chmod($file, 0666))
+				{
+					$ftp_error[] = 'Unable to CHMOD '.$file;
+				}
 			}
 		}
 		else
@@ -203,10 +155,5 @@ if ( (sizeof($ftp_error) == 0) and ($correct_path) )
 		'path' => $path,
 	);
 }
-
-
-
-//print_r($list);
-
 
 ?>
