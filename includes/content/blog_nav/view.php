@@ -13,6 +13,7 @@ $sections = array(
 	'all',
 	'latest_posts',
 	'yearly',
+	'author',
 );
 
 $show = array();

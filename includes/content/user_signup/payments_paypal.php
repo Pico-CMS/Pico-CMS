@@ -89,6 +89,7 @@ $curl_post['RETURNURL'] = 'http://' . $_SERVER['SERVER_NAME'] . $body->url(CURRE
 $curl_post['CANCELURL'] = 'http://' . $_SERVER['SERVER_NAME'] . $body->url(CURRENT_ALIAS . '/finish/paypal/cancel');
 $curl_post['METHOD'] = 'SetExpressCheckout';
 $curl_post['DESC'] = $settings['invoice_description'];
+$curl_post['SOLUTIONTYPE'] = 'SOLE';
 
 $pp_response = Pico_SubmitPaypalRequest($payment_config['test_mode'], $curl_post);
 

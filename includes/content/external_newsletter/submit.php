@@ -12,6 +12,7 @@ if ($action == 'update_options')
 	$component_id  = $_POST['component_id'];
 	$new_options   = $_POST['options'];
 	$remove_button = $_POST['remove_button'];
+	$remove_button_rollover = $_POST['remove_button_rollover'];
 	
 	foreach ($new_options as $key=>$val)
 	{
@@ -43,6 +44,11 @@ if ($action == 'update_options')
 	if ($remove_button == 1)
 	{
 		$new_options['submit_button'] = '';
+	}
+	
+	if ($remove_button_rollover == 1)
+	{
+		$new_options['submit_button_rollover'] = '';
 	}
 	
 	$db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `additional_info`=? WHERE `component_id`=?', serialize($new_options), $component_id);

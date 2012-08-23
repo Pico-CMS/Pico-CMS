@@ -17,3 +17,9 @@ function EN_SubmitButton(filename)
 	var obj = document.getElementById('newsletter_submit_button');
 	obj.value = filename;
 }
+
+function EN_SubmitButtonRollover(filename)
+{
+	var obj = document.getElementById('newsletter_submit_button_rollover');
+	obj.value = filename;
+}

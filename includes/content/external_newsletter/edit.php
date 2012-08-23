@@ -22,10 +22,10 @@ if (!is_array($lists)) { $lists = array(); }
 <form method="post" action="<?=$body->url('includes/content/external_newsletter/submit.php')?>" onsubmit="EN_UpdateOptions(this); return false" style="height: auto" />
 	<input type="hidden" name="component_id" id="component_id" value="<?=$component_id?>" />
 	<input type="hidden" name="page_action" value="update_options" />
-	<table border="0" cellpadding="2" cellspacing="1">
-	<tr>
+	<table border="0" cellpadding="2" cellspacing="1" class="admin_list">
+	<tr class="a">
 		<td>Newsletter Portal</td>
-		<td>
+		<td colspan="2">
 			<select name="options[newsletter_portal]">
 				<option <?=($options['newsletter_portal'] == 'mc') ? 'selected="selected"' : ''?> value="mc">Mail Chimp</option>
 				<option <?=($options['newsletter_portal'] == 'cc') ? 'selected="selected"' : ''?> value="cc">Constant Contact</option>
@@ -33,33 +33,46 @@ if (!is_array($lists)) { $lists = array(); }
 			</select>
 		</td>
 	</tr>
-	<tr>
+	<tr class="b">
 		<td>Layout</td>
-		<td>
+		<td colspan="2">
 			<select name="options[layout]">
 				<option <?=($options['layout'] == 'full') ? 'selected="selected"' : ''?> value="full">Full</option>
 				<option <?=($options['layout'] == 'short') ? 'selected="selected"' : ''?> value="short">Short</option>
+				<option <?=($options['layout'] == 'short_name') ? 'selected="selected"' : ''?> value="short_name">Short with name</option>
 			</select>
 		</td>
 	</tr>
-	<tr>
+	<tr class="a">
 		<td>Signup Box Text</td>
-		<td>
+		<td colspan="2">
 			<input type="text" name="options[signup_box_text]" value="<?=$options['signup_box_text']?>" />
 		</td>
 	</tr>
-	<tr>
+	<tr class="b">
+		<td>Email Box Text</td>
+		<td colspan="2">
+			<input type="text" name="options[email_box_text]" value="<?=$options['email_box_text']?>" />
+		</td>
+	</tr>
+	<tr class="a">
+		<td>Name Box Text</td>
+		<td colspan="2">
+			<input type="text" name="options[name_box_text]" value="<?=$options['name_box_text']?>" />
+		</td>
+	</tr>
+	<tr class="b">
 		<td>Submit Button Text</td>
-		<td>
+		<td colspan="2">
 			<input type="text" name="options[submit_button_text]" value="<?=$options['submit_button_text']?>" />
 		</td>
 	</tr>
-	<tr>
+	<tr class="a">
 		<td>Custom Submit Button</td>
-		<td>
+		<td colspan="2">
 			<?php
 			$upload_path = $body->url('includes/content/external_newsletter/button_upload.php');
-			$uploader = new Uploader($upload_path, 'EN_SubmitButton', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'ffffff');
+			$uploader = new Uploader($upload_path, 'EN_SubmitButton', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'BBDE9C');
 			
 			if (strlen($options['submit_button']) > 0)
 			{
@@ -72,11 +85,36 @@ if (!is_array($lists)) { $lists = array(); }
 			
 			echo '<p><input type="checkbox" name="remove_button" value="1" /> Remove Uploaded Image</p>';
 			echo $uploader->Output();
-			echo '<input type="hidden" name="options[submit_button]" id="newsletter_submit_button" value="'.$options['submit_button'].'" />';
+			echo '<br /><input type="text" readonly="readonly" name="options[submit_button]" id="newsletter_submit_button" value="'.$options['submit_button'].'" />';
+			?>
+		</td>
+	</tr>
+	<tr class="b">
+		<td>Custom Submit Button (Rollover)</td>
+		<td colspan="2">
+			<?php
+			$upload_path = $body->url('includes/content/external_newsletter/button_upload.php');
+			$uploader = new Uploader($upload_path, 'EN_SubmitButtonRollover', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'cccccc');
+			
+			if (strlen($options['submit_button']) > 0)
+			{
+				$file = 'includes/content/external_newsletter/buttons/'.$options['submit_button_rollover'];
+				if (is_file($file))
+				{
+					echo '<img src="'.$body->url($file).'" />';
+				}
+			}
+			
+			echo '<p><input type="checkbox" name="remove_button_rollover" value="1" /> Remove Uploaded Image</p>';
+			echo $uploader->Output();
+			echo '<br /><input type="text" readonly="readonly" name="options[submit_button_rollover]" id="newsletter_submit_button_rollover" value="'.$options['submit_button_rollover'].'" />';
 			?>
 		</td>
 	</tr>
 <?php
+
+$counter = 0;
+
 if (!isset($options['newsletter_portal']))
 {
 	echo '</table><input type="submit" value="Update" name="submitbtn" /></form></div>';
@@ -88,8 +126,9 @@ else
 	$selected_fields = $fields[$options['newsletter_portal']];
 	foreach ($selected_fields as $key => $info)
 	{
+		$class = ($counter % 2 == 0) ? 'a' : 'b'; $counter++;
 		?>
-	<tr>
+	<tr class="<?=$class?>">
 		<td><?=$info['name']?></td>
 		<td colspan="2"><div><?=$info['desc']?></div><input type="text" name="options[<?=$key?>]" value="<?=$options[$key]?>" /></td>
 	</tr>
@@ -99,8 +138,9 @@ else
 
 for ($x = 0; $x < sizeof($lists)+1; $x++)
 {
+	$class = ($counter % 2 == 0) ? 'a' : 'b'; $counter++;
 	?>
-	<tr>
+	<tr class="<?=$class?>">
 		<td>List Number/Name <?=$x+1?></td>
 		<td><input type="text" name="options[lists][]" value="<?=$lists[$x]?>" /></td>
 		<td><input type="text" name="options[listnames][]" value="<?=$listnames[$x]?>" /></td>

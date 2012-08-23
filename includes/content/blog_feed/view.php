@@ -116,6 +116,8 @@ HTML;
 			$subpage = PageNameToAlias($title);
 			$link    = $body->url($blog_alias . '/' . $subpage);
 			$story   = $entry['post'];
+			$author  = $entry['author'];
+			$by_line = $entry['by_line'];
 			
 			$tag_data = unserialize($entry['tags']);
 			if (sizeof($tag_data) > 0)
@@ -164,12 +166,43 @@ HTML;
 				$blog_entry = str_replace('DATE', $date, $blog_entry);
 			}
 			
+			unset($matches);
+			preg_match('/\{IMAGE,(\d+),(\d+)\}/', $layout, $matches);
+			if (isset($matches[1]))
+			{
+				$width = $matches[1];
+				$height = $matches[2];
+				
+				$source_image  = 'includes/content/blog/storage/'.$entry['post_id'].'/'. $entry['story_image'];
+				if (is_file($source_image))
+				{
+					$filename = md5($entry['post_id'] . '_' . $width . '_' . $height) . '.png';
+					$image    = 'includes/content/blog/storage/'.$entry['post_id'].'/'.$filename;
+					if (!is_file($image))
+					{
+						require_once('includes/content/media/functions.php');
+						make_new_image_ws($source_image, $image, $width, $height);
+					}
+					
+					$replace = (is_file($image)) ? '<img src="'.$body->url($image).'" />' : '';
+				}
+				else
+				{
+					$replace = '';
+				}
+				
+				
+				$blog_entry  = preg_replace('/\{IMAGE,\d+,\d+\}/', $replace, $blog_entry);
+			}
+			
 			
 			$blog_entry = str_replace('STORY', $story, $blog_entry);
 			$blog_entry = str_replace('TITLE', $title, $blog_entry);
 			$blog_entry = str_replace('CATEGORY', $category, $blog_entry);
 			$blog_entry = str_replace('TAGS', $tags, $blog_entry);
 			$blog_entry = str_replace('LINK', $link, $blog_entry);
+			$blog_entry = str_replace('AUTHOR', $author, $blog_entry);
+			$blog_entry = str_replace('BY_LINE', $by_line, $blog_entry);
 			
 			echo '<div class="blog_entry">'.$blog_entry.'</div>';
 

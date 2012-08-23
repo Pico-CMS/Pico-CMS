@@ -31,11 +31,11 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 		if ($options['hide_expired'] == 1)
 		{
 			$today = mktime(0,0,0, date('m'), date('d'), date('Y'));
-			$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `date` >= ? AND `published`=1 ORDER BY `date` DESC', $blog_id, $today);
+			$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `date` >= ? AND `published`=? ORDER BY `date` DESC', $blog_id, $today, 1);
 		}
 		else
 		{
-			$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=1  ORDER BY `date` DESC', $blog_id);
+			$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=?  ORDER BY `date` DESC', $blog_id, 1);
 		}
 		
 		if ( (is_array($entries)) and (sizeof($entries) > 0) )
@@ -75,7 +75,7 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 			$timestamp = mktime(0,0,0, date('n'), 1, date('Y'));
 		}
 		
-		$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `date` >= ? AND `published`=1 ORDER BY `date` DESC', $blog_id, $timestamp);
+		$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `date` >= ? AND `published`=? ORDER BY `date` DESC', $blog_id, $timestamp, 1);
 		if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		{
 			if ($settings['this_month_view'] == 'dropdown')
@@ -124,7 +124,7 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 		}
 		// see if we have uncategoried...
 		
-		$check = $db->result('SELECT count(*) FROM `'.$blog_entries.'` WHERE `category`=0 AND `published`=1');
+		$check = $db->result('SELECT count(*) FROM `'.$blog_entries.'` WHERE `category`=0 AND `published`=?', 1);
 		if ( (int) $check > 0)
 		{
 			$link = $body->url($blog_alias . '/category/uncategorized');
@@ -160,7 +160,7 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 	}
 	elseif ($section == 'tags')
 	{
-		$all_entries = $db->force_multi_assoc('SELECT `tags` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=1 ORDER BY `date` DESC ', $blog_id);
+		$all_entries = $db->force_multi_assoc('SELECT `tags` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=? ORDER BY `date` DESC', $blog_id, 1);
 		$all_tags    = array();
 		$tag_count   = array();
 		$max_tag     = 1;
@@ -267,7 +267,7 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 	}
 	elseif ($section == 'archives')
 	{
-		$all_entries = $db->force_multi_assoc('SELECT `date` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=1 ORDER BY `date` DESC ', $blog_id);
+		$all_entries = $db->force_multi_assoc('SELECT `date` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=? ORDER BY `date` DESC', $blog_id, 1);
 		$include = array();
 		if ( (is_array($all_entries)) and (sizeof($all_entries) > 0) )
 		{
@@ -342,7 +342,7 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 	}
 	elseif ($section == 'yearly')
 	{
-		$all_entries = $db->force_multi_assoc('SELECT `date` FROM `'.$blog_entries.'` WHERE `component_id`=? ORDER BY `date` DESC ', $blog_id);
+		$all_entries = $db->force_multi_assoc('SELECT `date` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=? ORDER BY `date` DESC', $blog_id, 1);
 		$include = array();
 		if ( (is_array($all_entries)) and (sizeof($all_entries) > 0) )
 		{
@@ -381,6 +381,36 @@ function Blognav_ShowSection($blog_id, $section, $label, $settings)
 					$year  = date('Y', $date);
 					$link = $body->url($blog_alias . '/year/' . $year);
 					$section_html .= '<li><a href="'.$link.'">'.date('Y', $date).'</a></li>';
+				}
+				$section_html .= '</ul>';
+			}
+		}
+	}
+	elseif ($section == 'author')
+	{
+		$authors = $db->force_multi_assoc('SELECT DISTINCT(`author`) as `author` FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=? ORDER BY `author` ASC', $blog_id, 1);
+		if (is_array($authors))
+		{
+			if ($settings['author_view'] == 'dropdown')
+			{
+				$section_html .= '<select onchange="Blog_ShowLink(this)">';
+				$section_html .= '<option value=""></option>';
+				foreach ($authors as $a)
+				{
+					$author = $a['author'];
+					$link = $body->url($blog_alias . '/author/' . $author);
+					$section_html .= '<option value="'.$link.'">'.$author.'</option>';
+				}
+				$section_html .= '</select>';
+			}
+			else
+			{
+				$section_html .= '<ul>';
+				foreach ($authors as $a)
+				{
+					$author = $a['author'];
+					$link = $body->url($blog_alias . '/author/' . $author);
+					$section_html .= '<li><a href="'.$link.'">'.$author.'</a></li>';
 				}
 				$section_html .= '</ul>';
 			}

@@ -86,7 +86,9 @@ function make_resized_image($source, $dest, $desired_width = 0, $desired_height 
 	
 	$new_im = imagecreatetruecolor($final_width, $final_height);
 	imagecopyresampled($new_im, $i, 0, 0, 0, 0, $final_width, $final_height, $original_width, $original_height);
-	imagejpeg($new_im, $dest, 100);
+	//imagejpeg($new_im, $dest, 100);
+	
+	gallery_output_image($new_im, $dest, 'jpg');
 }
 
 // creates an image with a given width and height
@@ -103,7 +105,9 @@ function make_finite_image($source, $dest, $final_width, $final_height)
 	imagefill($new_im, 0, 0, $trans_colour);
 	
 	imagecopyresampled($new_im, $i, 0, 0, 0, 0, $final_width, $final_height, $original_width, $original_height);
-	imagepng($new_im, $dest);
+	//imagepng($new_im, $dest);
+	
+	gallery_output_image($new_im, $dest, 'png');
 }
 
 // creates an image with a finite size, sections out what it can to produce the most logical image for given size
@@ -144,7 +148,9 @@ function make_new_image($full_path, $dest, $final_width = 320, $final_height = 1
 	$final_im = imagecreatetruecolor($final_width, $final_height);
 	imagecopyresampled($final_im, $new_im, 0, 0, $x_trim, $y_trim, $final_width, $final_height, $final_width, $final_height);
 	
-	imagejpeg($final_im, $dest, 100);
+	//imagejpeg($final_im, $dest, 100);
+	
+	gallery_output_image($final_im, $dest, 'jpg');
 }
 
 // creates an image with a finite size, sections out what it can to produce the most logical image for given size, adds transparency where needed
@@ -195,7 +201,8 @@ function make_new_image_ws($full_path, $dest, $desired_width = 320, $desired_hei
 	imagefill($final_im, 0, 0, $trans_colour);
 	
 	imagecopyresampled($final_im, $new_im, $x_trim, $y_trim, 0, 0, $final_width, $final_height, $final_width, $final_height);
-	imagepng($final_im, $dest, 5, PNG_NO_FILTER);
+	
+	gallery_output_image($final_im, $dest, 'png');
 }
 
 // creates an image with a finite size, sections out what it can to produce the most logical image for given size, adds BLACK where needed
@@ -248,7 +255,9 @@ function make_new_image_bs($full_path, $dest, $desired_width = 320, $desired_hei
 	imagefill($final_im, 0, 0, $black);
 	
 	imagecopyresampled($final_im, $new_im, $x_trim, $y_trim, 0, 0, $final_width, $final_height, $final_width, $final_height);
-	imagejpeg($final_im, $dest, 100);
+	//imagejpeg($final_im, $dest, 100);
+	
+	gallery_output_image($final_im, $dest, 'jpg');
 }
 
 function file_extension($filename)
@@ -392,5 +401,43 @@ function get_gallery_image($image_id)
 	}
 	
 	return $image_file;
+}
+
+// outputs a given image resource $im to DEST, $mode is either jpg or png
+// returns true on succcess, false on failure
+function gallery_output_image($im, $dest, $mode)
+{
+	if ($dest != null)
+	{
+		$writable = Pico_IsWritable($dest, true);
+		if ($writable)
+		{
+			if ($mode == 'png')
+			{
+				imagepng($im, $dest, 5, PNG_NO_FILTER);
+			}
+			else
+			{
+				imagejpeg($im, $dest, 100);
+			}
+			
+			return TRUE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	else
+	{
+		if ($mode == 'png')
+		{
+			imagepng($im, $dest, 5, PNG_NO_FILTER);
+		}
+		else
+		{
+			imagejpeg($im, $dest, 100);
+		}
+	}
 }
 ?>

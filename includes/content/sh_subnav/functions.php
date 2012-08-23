@@ -93,7 +93,32 @@ function SubNav_Display($data, $class = '', $parent = 0)
 					else
 					{
 						$item_info = $db->assoc('SELECT * FROM `'.$sh_table.'` WHERE `entry_id`=?', $id);
-						if ($item_info['page_id'] != 0)
+						if ($item_info['page_id'] == -1)
+						{
+							// log in or out page
+							if (USER_ACCESS == 0)
+							{
+								$alias = 'login';
+								$current_login_page = Pico_Setting('pico_login_page');
+								if (!is_numeric($current_login_page)) { $current_login_page = 0; }
+								
+								if ($current_login_page != 0)
+								{
+									// make sure this page exists
+									$page_info = $db->assoc('SELECT * FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $current_login_page);
+									if (is_array($page_info))
+									{
+										$alias = $page_info['alias'];
+									}
+								}
+								$name = '<a href="'.$body->url($alias).'">Log In</a>';
+							}
+							else
+							{
+								$name = '<a href="'.$body->url('logout').'">Log Out</a>';
+							}
+						}
+						elseif ($item_info['page_id'] != 0)
 						{
 							// page
 							$page_info = $db->assoc('SELECT * FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $item_info['page_id']);

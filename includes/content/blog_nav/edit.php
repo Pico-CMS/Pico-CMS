@@ -113,6 +113,18 @@ $blog_drop .= '</select>';
 		</select>
 	</td>
 </tr>
+<tr>
+	<td class="bold">Author</td>
+	<td>Enabled <input type="checkbox" name="settings[author]" value="enabled" <?=($settings['author'] == 'enabled') ? 'checked="checked"': '' ?>/></td>
+	<td>Position: <input type="text" size="3" maxlength="3" name="settings[author_position]" value="<?=$settings['author_position']?>" /></td>
+	<td>Label: <input type="text" name="settings[author_label]" value="<?=$settings['author_label']?>" /></td>
+	<td>
+		View: <select name="settings[author_view]">
+			<option value="list"     <?=($settings['author_view'] == 'list')?'selected="selected"':''?>>List</option>
+			<option value="dropdown" <?=($settings['author_view'] == 'dropdown')?'selected="selected"':''?>>Dropdown</option>
+		</select>
+	</td>
+</tr>
 </table>
 <input type="submit" value="Update" />
 </form>
