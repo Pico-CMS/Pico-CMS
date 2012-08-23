@@ -119,4 +119,4 @@ CREATE TABLE `PREFIX_pico_settings` (
 	`keyvalue` varchar(255)
 );
 >
-INSERT INTO `PREFIX_pico_settings` (`keyfield`, `keyvalue`) VALUES ("pico_build_version", "1025");
+INSERT INTO `PREFIX_pico_settings` (`keyfield`, `keyvalue`) VALUES ("pico_build_version", "1037");
