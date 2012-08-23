@@ -14,17 +14,6 @@ CREATE TABLE IF NOT EXISTS `PREFIX_pico_components` (
   PRIMARY KEY  (`component_id`)
 );
 >
-DROP TABLE IF EXISTS `PREFIX_pico_contact_form`;
->
-CREATE TABLE IF NOT EXISTS `PREFIX_pico_contact_form` (
-  `component_id` bigint(11) NOT NULL,
-  `recipient_address` varchar(255) NOT NULL,
-  `from_subject` varchar(255) NOT NULL,
-  `complete_message` text,
-  `fields` blob,
-  PRIMARY KEY  (`component_id`)
-);
->
 DROP TABLE IF EXISTS `PREFIX_pico_content`;
 >
 CREATE TABLE IF NOT EXISTS `PREFIX_pico_content` (
