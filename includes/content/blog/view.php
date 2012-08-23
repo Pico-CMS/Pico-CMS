@@ -174,6 +174,15 @@ elseif ( (isset($params[1])) and ($params[1] == 'date') )
 	
 	$body->title = date('F Y', $start) . ' - ' .  ( (defined('SITE_TITLE')) ? SITE_TITLE : $body->title);
 }
+elseif ( (isset($params[1])) and ($params[1] == 'author') )
+{
+	// if author
+	
+	$show_layout = (in_array('author', $show_short_layout)) ? 'short' : 'full';
+	$author = urldecode($params[2]);
+	$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `author` LIKE ? AND `component_id`=? AND `published`=1 ORDER BY `date` ASC', $author, $component_id);
+	$body->title = $author . ' - ' .  ( (defined('SITE_TITLE')) ? SITE_TITLE : $body->title);
+}
 elseif ( (isset($params[1])) and ($params[1] == 'feed') )
 {
 	// if rss feed

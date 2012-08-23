@@ -452,6 +452,21 @@ if ($action == 'delete_user')
 	
 	if ( ($delete_user['access'] <= USER_ACCESS) and ($delete_user['id'] != USER_ID) )
 	{
+		// see if this user is in any groups
+		while ($user_group = Pico_GetUserGroupId($delete_user['id']))
+		{
+			$group_table = DB_PREFIX . 'pico_groups';
+			$profile_id  = $db->result('SELECT `profile_id` FROM `'.$group_table.'` WHERE `group_id`=?', $user_group);
+			
+			// if this user has any profile information, remove it
+			$profile_table = DB_PREFIX . 'user_profile_values_' . $profile_id;
+			$db->result('DELETE FROM `'.$profile_table.'` WHERE `user_id`=? LIMIT 1', $delete_user['id']);
+			
+			// remove user from group
+			Pico_RemoveUserFromGroup($delete_user['id'], $user_group);
+		}
+		
+		// remove user
 		$db->run('DELETE FROM `'.DB_USER_TABLE.'` WHERE `id`=? LIMIT 1', $_GET['user_id']);
 	}
 	exit();
@@ -476,7 +491,6 @@ if ($action == 'delete_page')
 
 if ($action == 'edit_user')
 {
-	
 	$a = $_POST['access'];
 	$f = $_POST['first_name'];
 	$l = $_POST['last_name'];
@@ -492,6 +506,19 @@ if ($action == 'edit_user')
 		$a, $e, $f, $l, $user_id
 	);
 	
+	if (is_array($_POST['expiration']))
+	{
+		// set expiration date
+		$mo = $_POST['expiration']['month'];
+		$da = $_POST['expiration']['day'];
+		$yr = $_POST['expiration']['year'];
+		$exp_date = @mktime(23, 59, 59, $mo, $da, $yr);
+		if ( (is_numeric($exp_date)) and ($exp_date != 0) )
+		{
+			$db->run('UPDATE `'.DB_USER_TABLE.'` SET `registration_active`=? WHERE `id`=?', $exp_date, $user_id);
+		}
+	}
+	
 	if ($result == FALSE) { echo 'SQL ERROR: ' . $db->error; }
 	
 	if ( (strlen($_POST['password']) > 5) and ($_POST['password'] != '000000') )
@@ -499,10 +526,7 @@ if ($action == 'edit_user')
 		$p = md5($_POST['password']);
 		$result = $db->run('UPDATE `'.DB_USER_TABLE.'` SET `password`=? WHERE `id`=?', $p, $user_id);
 	}
-	
-	exit();
 }
-
 if ($action == 'add_user')
 {
 	$u = $_POST['username'];
@@ -512,11 +536,89 @@ if ($action == 'add_user')
 	$l = $_POST['last_name'];
 	$e = $_POST['email_address'];
 	
-	$result = $db->run('INSERT INTO `'.DB_USER_TABLE.'` (`username`, `password`, `access`, `email_address`, `first_name`, `last_name`) VALUES (?,?,?,?,?,?)',
+	$user_id = $db->insert('INSERT INTO `'.DB_USER_TABLE.'` (`username`, `password`, `access`, `email_address`, `first_name`, `last_name`) VALUES (?,?,?,?,?,?)',
 		$u, $p, $a, $e, $f, $l
 	);
 	
 	if ($result == FALSE) { echo 'SQL ERROR: ' . $db->error; }
+}
+
+if (($action == 'edit_user') or ($action == 'add_user'))
+{
+	if ($_POST['save_profile'] == 'yes')
+	{
+		// have additional info to add
+		$group_table = DB_PREFIX . 'pico_groups';
+		
+		$new_user_profile_group = $_POST['user_profile'];
+		if (!is_numeric($new_user_profile_group)) { $new_user_profile_group = 0; }
+		$old_group_id = Pico_GetUserGroupId($user_id);
+		$profile_id = $db->result('SELECT `profile_id` FROM `'.$group_table.'` WHERE `group_id`=?', $new_user_profile_group);
+		
+		$old_profile_id = Pico_GetUserProfileId($user_id);
+		
+		if ($old_group_id != $new_user_profile_group)
+		{
+			// remove user from group
+			Pico_RemoveUserFromGroup($user_id, $old_group_id);
+			
+			// put user in new group (if needed)
+			if ($new_user_profile_group != 0)
+			{
+				Pico_AddUserToGroup($user_id, $new_user_profile_group);
+			}
+		}
+		
+		if ($old_profile_id != $profile_id)
+		{
+			// remove user from previous table
+			$profile_table = DB_PREFIX . 'user_profile_values_' . $old_profile_id;
+			$created = $db->result('SELECT `created` FROM `'.$profile_table.'` WHERE `user_id`=?', $user_id);
+			
+			$db->result('DELETE FROM `'.$profile_table.'` WHERE `user_id`=? LIMIT 1', $user_id);
+		}
+		
+		// add user to new group (if needed)
+		$profile_table = DB_PREFIX . 'user_profile_values_' . $profile_id;
+		$check = $db->result('SELECT count(1) FROM `'.$profile_table.'` WHERE `user_id`=?', $user_id);
+		
+		if ($check == 0)
+		{
+			if ( (!is_numeric($created)) or ($created == 0) ) { $created = time(); }
+			$db->run('INSERT INTO `'.$profile_table.'` (`user_id`, `created`, `last_updated`) VALUES (?,?,?)',
+				$user_id, $created, time()
+			);
+		}
+		
+		if ($profile_id != 0)
+		{
+			// update profile table with new information
+			$profile_table = DB_PREFIX . 'user_profile_values_' . $profile_id;
+			$profile_data = Pico_GetProfileFieldData($profile_id, $_POST);
+			
+			foreach ($profile_data as $item)
+			{
+				$field = 'field_' . $item['id'];
+				$value = $_POST[$field];
+				
+				if ($item['type'] == 'date')
+				{
+					$mo = (is_numeric($value['month'])) ? $value['month'] : 0;
+					$da = (is_numeric($value['day']))   ? $value['day'] : 0;
+					$yr = (is_numeric($value['year']))  ? $value['year'] : 0;
+					$value = mktime(0, 0, 0, $mo, $da, $yr);
+				}
+				elseif ($item['type'] == 'check_list')
+				{
+					$value = serialize($value);
+				}
+				
+				if ($value == null) { $value = ''; }
+				
+				$db->run('UPDATE `'.$profile_table .'` SET `'.$field.'`=? WHERE `user_id`=? LIMIT 1', $value, $user_id);
+			}
+		}
+	}
 	exit();
 }
 
@@ -987,13 +1089,32 @@ if ($action == 'export_profile_users')
 	$headers[] = 'Expiration';
 	$headers[] = 'User Group';
 	
+	// get component ids for user_signup
+	$components = $db->force_multi_assoc('SELECT * FROM `'.DB_COMPONENT_TABLE.'` WHERE `folder`=?', 'user_signup');
+	$signup_components = array();
+	if (is_array($components))
+	{
+		// only add if we have a component in here for it
+		$headers[] = 'Last Payment';
+		$headers[] = 'Date';
+		$headers[] = 'Note';
+	
+		foreach ($components as $c)
+		{
+			$signup_components[] = $c['component_id'];
+		}
+	}
+	
 	if (is_array($field_list))
 	{
 		$extra_data = array();
+		$field_types = array();
 		foreach ($field_list as $field)
 		{
 			$headers[] = $field['name'];
-			$extra_data[] = 'field_' . $field['field_id'];
+			$key = 'field_' . $field['field_id'];
+			$extra_data[] = $key;
+			$field_types[$key] = $field['type'];
 		}
 	}
 	
@@ -1026,15 +1147,84 @@ if ($action == 'export_profile_users')
 					$row[] = $user['first_name'];
 					$row[] = $user['email_address'];
 					
-					$expiration = ($user['user_active'] == 1) ? 'Never' : date('m-d-Y', $user['registration_active']);
+					if ($user['registration_active'] != 0)
+					{
+						$expiration = ($user['user_active'] == 1) ? 'Never' : date('m-d-Y', $user['registration_active']);
+					}
+					else
+					{
+						$expiration = '';
+					}
 					$row[] = $expiration;
 					$row[] = $group_info[$user_group]['name'];
+					
+					// get user's last payment date and amount
+					if (sizeof($signup_components) > 0)
+					{
+						$last_pmt  = '';
+						$last_date = '';
+						$last_note = '';
+						foreach ($signup_components as $cid)
+						{
+							// see if there is a transaction
+							$last_entry = $db->assoc('SELECT * FROM `'.DB_TRANSACTION_LOG.'` WHERE `user_id`=? AND `component_id`=? ORDER BY `timestamp` DESC LIMIT 1', 
+								$user['user_id'], $cid
+							);
+							
+							if (is_array($last_entry))
+							{
+								$last_pmt  = '$' . number_format($last_entry['amount_gross'], 2);
+								$last_date = date('m-d-Y', $last_entry['timestamp']);
+								$last_note = $last_entry['note'];
+								break;
+							}
+						}
+						
+						$row[] = $last_pmt;
+						$row[] = $last_date;
+						$row[] = $last_note;
+					}
 					
 					if (sizeof($extra_data) > 0)
 					{
 						foreach ($extra_data as $field)
 						{
-							$row[] = $user[$field];
+							$val   = $user[$field];
+							$type  = $field_types[$field];
+							
+							if ($type == 'check_list')
+							{
+								$ar = unserialize($val);
+								if (is_array($ar))
+								{
+									$val = implode(', ', $ar);
+									$val = stripslashes($val);
+								}
+								else
+								{
+									$val = '';
+								}
+							}
+							elseif ($type == 'date')
+							{
+								if ((!is_numeric($val)) or ($val == 0))
+								{
+									$val = 'n/a';
+								}
+								else
+								{
+									$val = date('m-d-Y', $val);
+								}
+								
+							}
+							else
+							{
+								$val = str_replace('<br/>', "\n", $val);
+								$val = str_replace('<br />', "\n", $val);
+							}
+							$row[] = $val;
+							
+							
 						}
 					}
 					

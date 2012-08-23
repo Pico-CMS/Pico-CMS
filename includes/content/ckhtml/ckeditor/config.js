@@ -1,17 +1,7 @@
 /*
-Copyright (c) 2003-2011, CKSource - Frederico Knabben. All rights reserved.
+Copyright (c) 2003-2012, CKSource - Frederico Knabben. All rights reserved.
 For licensing, see LICENSE.html or http://ckeditor.com/license
 */
-
-CKEDITOR.stylesSet.add( 'my_styles',
-[
-    // Inline styles
-    { name : 'Box Color - Gray', element : 'div', attributes : { 'class' : 'box-a' } },
-    { name : 'Box Color - Blue', element : 'div', attributes : { 'class' : 'box-b' } },
-    { name : 'Font - Berthold Akzidenz', element : 'span', attributes : { 'class' : 'berthold_akzidenx' } },
-    { name : 'Font - Pistilli', element : 'span', attributes : { 'class' : 'pistilli' } },
-    { name : 'Font - Bodoni', element : 'span', attributes : { 'class' : 'bodoni' } },
-]);
 
 CKEDITOR.editorConfig = function( config )
 {
@@ -19,7 +9,6 @@ CKEDITOR.editorConfig = function( config )
 	// config.language = 'fr';
 	// config.uiColor = '#AADC6E';
 	
-	//config.contentsCss = url('site/style.php?page_id='+CURRENT_PAGE); 
 	config.extraPlugins = 'stylesheetparser';
 	config.contentsCss = url('site/ckeditor.php'); 
 	config.stylesSet = [];
@@ -33,5 +22,4 @@ CKEDITOR.editorConfig = function( config )
 	
 	config.removePlugins = 'resize,elementspath';
 	config.height = 300;
-	//config.stylesSet = 'my_styles';
 };

@@ -150,7 +150,7 @@ if ($step == 3)
 if ($step == 4)
 {
 	$body .= eval_include('install/step4.tpl');
-	Pico_Setting('pico_build_version', 1017);
+	Pico_Setting('pico_build_version', 1037);
 }
 
 

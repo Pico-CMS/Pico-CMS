@@ -239,8 +239,8 @@ if ($action == 'blog_image')
 	$full_file    = $storage . $entry_id . '/' .$saved_image;
 	$preview_file = $storage . $entry_id . '/' . md5('preview_'.$saved_image) . '.png';
 	
-	if (is_file($full_file)) { unlink($full_file); }
-	if (is_file($preview_file)) { unlink($preview_file); }
+	if (is_file($full_file)) { if (Pico_IsWritable($full_file, true)) { unlink($full_file); } }
+	if (is_file($preview_file)) { if (Pico_IsWritable($preview_file, true)) { unlink($preview_file); } }
 	// end: file check
 	
 	$tmp_file = 'includes/tmp/' . $filename;
@@ -270,8 +270,8 @@ if ($action == 'delete_blog_image')
 	$full_file    = $storage . $entry_id . '/' .$saved_image;
 	$preview_file = $storage . $entry_id . '/' . md5('preview_'.$saved_image) . '.png';
 	
-	if (is_file($full_file)) { unlink($full_file); }
-	if (is_file($preview_file)) { unlink($preview_file); }
+	if (is_file($full_file)) { if (Pico_IsWritable($full_file, true)) { unlink($full_file); } }
+	if (is_file($preview_file)) { if (Pico_IsWritable($preview_file, true)) { unlink($preview_file); } }
 	
 	$db->run('UPDATE `'.$blog_entries.'` SET `story_image`=? WHERE `post_id`=?', '', $entry_id);
 	exit();

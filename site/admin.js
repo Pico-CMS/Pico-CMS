@@ -231,9 +231,18 @@ function Navigate(obj)
 	window.location = url(obj.value);
 }
 
-function Pico_ManageUsers()
+function Pico_ManageUsers(page)
 {
-	Pico_DisplayAP(url('includes/ap_manage_users.php'), 'Manage Users', 650, 400);
+	page = (page == null) ? 0 : page;
+	Pico_DisplayAP(url('includes/ap_manage_users.php?page='+page), 'Manage Users', 800, 500);
+}
+
+function Pico_UserSearch()
+{
+	var search = document.getElementById('user_search').value;
+	search = urlencode(search);
+	
+	Pico_DisplayAP(url('includes/ap_manage_users.php?search='+search), 'Manage Users', 800, 500);
 }
 
 function Pico_EditGroup(group_id)
@@ -449,8 +458,20 @@ function Pico_AddUser(user_id)
 		extra = '?edit='+user_id;
 		title = 'Edit User';
 	}
+	
+	var func = function() {
+		Pico_LoadUserGroupProfile(user_id);
+	}
 
-	Pico_DisplayAP(url('includes/ap_users.php'+extra), title, 375, 275);
+	Pico_DisplayAP(url('includes/ap_users.php'+extra), title, 500, 500, func);
+}
+
+function Pico_LoadUserGroupProfile(user_id, group_id)
+{
+	user_id  = (user_id == null) ? 0 : user_id;
+	group_id = (group_id == null) ? 0 : group_id;
+	var target_url = url('includes/ap_user_profile_info.php?user_id='+user_id+'&group_id='+group_id);
+	new Ajax.Updater('user_group_profile_info', target_url);
 }
 
 function Pico_SH_AP_Refresh()
@@ -549,10 +570,14 @@ function Pico_Update()
 	Pico_DisplayAP(url('includes/ap_update.php'), 'Update Pico', 500, 300);
 }
 
-function Pico_CheckForUpdates()
+function Pico_CheckForUpdates(button)
 {
+	button.disabled = true;
+	document.getElementById('update_status').innerHTML = 'Checking for updates...';
 	var target_url = url('includes/update_check.php');
-	new Ajax.Updater('update_status', target_url);
+	new Ajax.Updater('update_status', target_url, { onComplete: function() {
+		
+	} });
 }
 
 function Pico_PerformUpdate(form)

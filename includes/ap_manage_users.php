@@ -3,7 +3,41 @@ chdir('../');
 require_once('core.php');
 if (USER_ACCESS < 3) { exit(); }
 
-$users = $db->force_multi_assoc('SELECT * FROM `'.DB_USER_TABLE.'` ORDER BY `access` DESC, `username` ASC');
+if (isset($_GET['search']))
+{
+	$search = urldecode($_GET['search']);
+	$search = '%' . $search . '%';
+	$users = $db->force_multi_assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `username` LIKE ? OR `email_address` LIKE ? OR `first_name` LIKE ? OR `last_name` LIKE ?',
+		$search, $search, $search, $search
+	);
+	
+	echo '<p>Found '.sizeof($users) .' users</p>';
+}
+else
+{
+	$page = $_GET['page'];
+	if (!is_numeric($page)) { $page = 0; }
+
+	$per_page = 25;
+	$limit = $page * $per_page;
+
+	$total_users = $db->result('SELECT count(1) FROM '.DB_USER_TABLE);
+	$num_pages = ceil($total_users / $per_page);
+
+	echo '<p>Browse by page: ';
+
+	for ($x = 0; $x < $num_pages; $x++)
+	{
+		echo '<span class="click" onclick="Pico_ManageUsers('.$x.')">'.($x+1).'</span> ';
+	}
+
+	echo '</p><div class="clear"></div>';
+
+	$users = $db->force_multi_assoc('SELECT * FROM `'.DB_USER_TABLE.'` ORDER BY `access` DESC, `username` ASC LIMIT '.$limit.', '.$per_page);
+}
+
+echo '<p>Search for user: <input type="text" id="user_search" value="" /> <input type="submit" value="Search" onclick="Pico_UserSearch()" /></p>';
+
 $table = '';
 if (sizeof($users) > 0)
 {
@@ -48,3 +82,4 @@ if (sizeof($users) > 0)
 </tr>
 <?=$table?>
 </table>
+

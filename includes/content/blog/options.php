@@ -94,7 +94,7 @@ $image_settings = unserialize($options['image_settings']);
 		<textarea name="layout" class="ap_textarea_lg"><?=htmlspecialchars($options['layout'])?></textarea><br />
 		Show on:<br />
 		<?php
-		$show_short_areas = array('main', 'archives', 'tags', 'categories');
+		$show_short_areas = array('main', 'archives', 'tags', 'categories', 'author');
 		
 		
 		foreach ($show_short_areas as $a)

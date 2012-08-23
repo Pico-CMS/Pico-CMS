@@ -8,10 +8,19 @@ $settings_table = PICO_SETTINGS;
 $db->run(<<<SQL
 CREATE TABLE IF NOT EXISTS `$settings_table` (
 	`keyfield` varchar(32) NOT NULL,
-	`keyvalue` varchar(255)
+	`keyvalue` TEXT
 );
 SQL
 );
+
+// 8/15/12: check to see if keyvalue is a varchar, if so, change it
+$keyvalue = $db->assoc('SHOW COLUMNS FROM `'.$settings_table.'` WHERE `Field`=?', 'keyvalue');
+$type = $keyvalue['Type'];
+if (stristr($type, 'varchar'))
+{
+	// alter table
+	$db->run('ALTER TABLE `'.$settings_table.'` CHANGE `keyvalue` `keyvalue` TEXT NULL DEFAULT NULL');
+}
 
 $section = $_GET['section'];
 $back = '<div class="click back" onclick="Pico_Settings()">[Back]</div>';
@@ -49,4 +58,4 @@ elseif ($section == 'login')
 <div class="clear"></div>
 <div class="setting_icon" onclick="Pico_SettingsSection('login')">Login Page</div>
 <div class="setting_icon" onclick="Pico_SettingsSection('social')">Social Media</div>
-<div class="setting_icon" onclick="">Users</div>
+<div class="setting_icon" onclick="Pico_PaymentSettings()">Payments</div>

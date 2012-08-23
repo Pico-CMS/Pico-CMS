@@ -187,4 +187,5 @@ if (!is_array($settings['ship_settings'])) { $settings['ship_settings'] = array(
 		
 	<input type="submit" value="Update" />
 	</form>
+	<div class="click back" onclick="Pico_Settings()">[Back]</div>
 </div>

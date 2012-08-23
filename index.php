@@ -1,6 +1,7 @@
 <?php
 include('core.php');
 ob_start();
+header('Content-type: text/html; charset=utf-8');
 
 if (CURRENT_ALIAS == 'logout')
 {
@@ -124,7 +125,7 @@ document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.
 </script>
 <script type="text/javascript">
 try {
-var pageTracker = _gat._getTracker("$ua_code1");
+var pageTracker = _gat._getTracker("$ua_code");
 pageTracker._trackPageview();
 } catch(err) {}</script>
 HTML;

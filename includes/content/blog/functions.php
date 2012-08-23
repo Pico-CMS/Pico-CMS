@@ -62,7 +62,10 @@ function blog_check_image_dir($entry_id)
 						if (is_file($full_bad_file))
 						{
 							//echo "BAD: $full_bad_file<br />";
-							unlink($full_bad_file);
+							if (Pico_IsWritable($full_bad_file, true))
+							{
+								unlink($full_bad_file);
+							}
 						}
 					}
 				}

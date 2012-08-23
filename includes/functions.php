@@ -539,11 +539,21 @@ function SortSelectOptions($a, $b)
 function Pico_ConnectFTP()
 {
 	// get ftp settings
-	$ftp_host = Pico_Setting('host');
-	$ftp_port = (int) Pico_Setting('port');
-	$ftp_path = Pico_Setting('path');
-	$ftp_user = Pico_Setting('username');
-	$ftp_pass = Pico_Setting('password');
+	
+	$host = Pico_Setting('ftp_host');
+	$port = Pico_Setting('ftp_port');
+	$path = Pico_Setting('ftp_path');
+	$user = Pico_Setting('ftp_username');
+	$pass = Pico_Setting('ftp_password');
+	
+	// for legacy
+	
+	$ftp_host = (strlen($host) > 0) ? $host : Pico_Setting('host');
+	$ftp_port = (is_numeric($port)) ? (int) $port : (int) Pico_Setting('port');
+	$ftp_path = (strlen($path) > 0) ? $path : Pico_Setting('path');
+	$ftp_user = (strlen($user) > 0) ? $user : Pico_Setting('username');
+	$ftp_pass = (strlen($pass) > 0) ? $pass : Pico_Setting('password');
+	
 	require_once('includes/ftp/ftp_class.php');
 	
 	ob_start(); // surpress normal ftp class output
@@ -840,6 +850,7 @@ function Pico_GroupBillingField($name = 'field_pattern', $selected_val = '')
 }
 
 // take a given profile id, return array containing field names and html output and other info
+// take a given profile id, return array containing field names and html output and other info
 function Pico_GetProfileFieldData($profile_id, $values = array())
 {
 	global $db;
@@ -906,9 +917,20 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 					$html = '<input type="checkbox" name="field_'.$f_id.'" value="1" '.$checked.' />';
 					break;
 				case 'check_list':
+					if (!is_array($value)) { $value = unserialize($value); }
+					if (!is_array($value)) { $value = array(); }
 					$html = '';
 					$options = explode("\n", trim($f['options']));
-					if (!is_array($value)) { $value = array(); }
+					
+					if (sizeof($value) > 0)
+					{
+						foreach ($value as $k => $v)
+						{
+							$value[$k] = stripslashes($v);
+						}
+					}
+					
+					//echo '<pre>'.print_r($value, true).'</pre>';
 					
 					if (sizeof($options) > 0)
 					{
@@ -930,6 +952,14 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 					$html = '<textarea class="text" name="field_'.$f_id.'">'.$value.'</textarea>';
 					break;
 				case 'date':
+					if ( (!is_array($value)) and (is_numeric($value)) )
+					{
+						$v = $value;
+						$value = array();
+						$value['month'] = date('m', $v);
+						$value['day'] = date('d', $v);
+						$value['year'] = date('Y', $v);
+					}
 					$html = 'Month: <input type="text" name="field_'.$f_id.'[month]" size="2" maxlength="2" value="'.$value['month'].'" /> ';
 					$html .= 'Day: <input type="text" name="field_'.$f_id.'[day]" size="2" maxlength="2" value="'.$value['day'].'" /> ';
 					$html .= 'Year: <input type="text" name="field_'.$f_id.'[year]" size="4" maxlength="4" value="'.$value['year'].'" />';
@@ -948,7 +978,7 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 
 function Pico_SubmitPaypalRequest($test_mode, $curl_post)
 {
-	$pp_url = ($test_mode == 1) ? 'https://api-3t.sandbox.paypal.com/nvp' : 'https://api-3t.sandbox.paypal.com/nvp';
+	$pp_url = ($test_mode == 1) ? 'https://api-3t.sandbox.paypal.com/nvp' : 'https://api-3t.paypal.com/nvp';
 	
 	$ch = curl_init($pp_url);
 	curl_setopt($ch, CURLOPT_POST, 1); // set POST method
@@ -1194,5 +1224,139 @@ function Pico_SendUserEmail($to, $subject, $message, $html = FALSE, $replyTo = n
 	$mail->Subject = $subject;
 	$mail->Body    = $message;
 	$mail->Send();
+}
+
+function Pico_RemoveUserFromGroup($user_id, $group_id)
+{
+	global $db;
+	$group_table = DB_PREFIX . 'pico_groups';
+	
+	$users = $db->result('SELECT `users` FROM `'.$group_table.'` WHERE `group_id`=?', $group_id);
+	$all_users = explode(',', $users);
+	
+	$new_users = array();
+	for ($x = 0; $x < sizeof($all_users); $x++)
+	{
+		$user = $all_users[$x];
+		if ($user != $user_id)
+		{
+			$new_users[] = $user;
+		}
+	}
+	
+	$db->run('UPDATE `'.$group_table.'` SET `users`=? WHERE `group_id`=?',
+		implode(',', $new_users), $group_id
+	);
+}
+
+function Pico_AddUserToGroup($user_id, $group_id)
+{
+	global $db;
+	$group_table = DB_PREFIX . 'pico_groups';
+	
+	$users = $db->result('SELECT `users` FROM `'.$group_table.'` WHERE `group_id`=?', $group_id);
+	$all_users = explode(',', $users);
+	
+	if (!in_array($user_id, $all_users))
+	{
+		$all_users[] = $user_id;
+	}
+	
+	$db->run('UPDATE `'.$group_table.'` SET `users`=? WHERE `group_id`=?',
+		implode(',', $all_users), $group_id
+	);
+}
+
+// checks a given database table to see if a column exists as defines, and adds/changes it as necessary
+function Pico_CheckTable($table_name, $column, $definition)
+{
+	global $db;
+	
+	$fields = $db->assoc('SHOW COLUMNS FROM `'.$table_name.'`');
+	$all_fields = array();
+	foreach ($fields as $f)
+	{
+		$all_fields[] = $f['Field'];
+	}
+	
+	if (!in_array($column, $all_fields))
+	{
+		$db->run('ALTER TABLE `'.$table_name.'` ADD COLUMN `'.$column.'` ' . $definition);
+	}
+}
+
+// checks to see if a file is writable, if not and $update_perms is true, it will attempt to make the file
+// or parent directory writable so that it can be written to
+function Pico_IsWritable($file, $update_perms = false)
+{
+	if ( (!file_exists($file)) or (is_file($file)) )
+	{
+		// check to see if parent folder is writable
+		$parent_dir = dirname($file);
+		
+		if (is_writable($parent_dir))
+		{
+			return TRUE;
+		}
+		elseif ($update_perms == TRUE)
+		{
+			// atempt to make writable
+			if (is_dir($parent_dir))
+			{
+				$folder_is_writable = Pico_IsWritable($parent_dir, TRUE);
+				return $folder_is_writable;
+			}
+			else
+			{
+				return FALSE;
+			}
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	$is_writable = is_writable($file);
+	
+	if (!$is_writable)
+	{
+		if ($update_perms == TRUE)
+		{
+			// try to connect via FTP and make this file writable
+			$ftp = @Pico_ConnectFTP();
+			if (!is_object($ftp))
+			{
+				return FALSE;
+			}
+			else
+			{
+				if (is_file($file))
+				{
+					@$ftp->chmod($file, 0666);
+				}
+				elseif (is_dir($file))
+				{
+					@$ftp->chmod($file, 0777);
+				}
+				
+				if (is_writable($file))
+				{
+					return TRUE;
+				}
+				else
+				{
+					return FALSE;
+				}
+			}
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	else
+	{
+		return TRUE;
+	}
 }
 ?>
