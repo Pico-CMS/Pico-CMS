@@ -2,7 +2,7 @@
 	<table border="0" cellpadding="0" cellspacing="0" class="search" align="center">
 	<tr>
 		<td><input type="text" class="searchbox" name="search" value="search the site" onfocus="this.value=''" onsubmit="return false" /></td>
-		<td><input type="submit" value="Go" /></td>
+		<td><input type="submit" class="searchbutton" value="Go" /></td>
 	</tr>
 	</table>
 </form>
