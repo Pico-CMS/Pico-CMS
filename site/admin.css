@@ -30,6 +30,11 @@
 	font-size: 8pt;
 }
 
+#ap_content .co_button
+{
+	font-size: 12px;
+}
+
 .pngn
 {
 	margin-right: 5px;
@@ -401,4 +406,58 @@ div.setting_icon
 {
  background: #fff;
  padding: 3px;
+}
+
+div.content.author
+{
+	position: relative;
+	z-index: 1;
+}
+
+div.content.author div.author_link
+{
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	width: 16px;
+	height: 16px;
+	background: url([URL]includes/icons/edit.png) center no-repeat;
+	cursor: pointer;
+}
+
+div.content.author:hover div.author_link
+{
+	display: block;
+}
+
+div.content.author:hover
+{
+	border: 1px blue dashed;
+	background: url([URL]site/images/stack.png);
+}
+
+.co_button
+{
+	position: absolute;
+	right: 10px;
+	bottom: 7px;
+	width: 150px;
+}
+
+.co_button2 { bottom: 32px; }
+.co_button3 { bottom: 57px; }
+.co_button4 { bottom: 82px; }
+.co_button5 { bottom: 107px; }
+.co_button6 { bottom: 132px; }
+.co_button7 { bottom: 157px; }
+.co_button8 { bottom: 182px; }
+.co_button9 { bottom: 207px; }
+.co_button10 { bottom: 232px; }
+
+#ap_content form
+{
+	height: auto;
+	position: inherit;
 }

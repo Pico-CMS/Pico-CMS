@@ -3,6 +3,7 @@
 require_once('includes/content/media/functions.php');
 $media_files      = DB_PREFIX . 'pico_media_files';
 $media_categories = DB_PREFIX . 'pico_media_categories';
+unset($_GET['instance_id']);
 ?>
 <input type="hidden" id="instance_id" value="<?=$instance_id?>" />
 <input type="hidden" id="component_id" value="<?=$component_id?>" />

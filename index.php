@@ -7,7 +7,7 @@ if (CURRENT_ALIAS == 'logout')
 {
 	include('includes/logout.php');
 }
-elseif (CURRENT_ALIAS == 'cleanup')
+elseif ($params[0] == 'cleanup')
 {
 	include('includes/cleanup.php');
 }
@@ -61,7 +61,9 @@ else
 			}
 			
 			// process the page theme and output it, output will get grabbed by the OB
-			$body->title = (strlen($page_details['www_title']) > 0) ? $page_details['www_title'] : $page_details['name'];
+			$body_title = (strlen($page_details['www_title']) > 0) ? $page_details['www_title'] : $page_details['name'];
+			$body->set_title(0, $body_title);
+
 			if ((USER_ACCESS >= $page_details['user_access']) or ($user_is_in_group))
 			{
 				// process the page
@@ -113,48 +115,62 @@ if (defined('STATIC_HTML'))
 	exit();
 }
 
-// define google analytics
+$body_classes  = $body->get_classes();
+$class_text    = implode(' ', $body_classes);
+$thumbnail_url = $body->get_thumbnail();
+$social_html   = '';
 
-if (Pico_Setting('use_google_analytics') == 1)
+if (strlen($thumbnail_url) > 0)
 {
-	$ua_code = Pico_Setting('ga_code');
-	$google_anayltics = <<<HTML
-<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("$ua_code");
-pageTracker._trackPageview();
-} catch(err) {}</script>
-HTML;
+	$social_html .= '<link rel="img_src" href="'.$thumbnail_url.'" />' .
+	"\n\t" . '<meta property="og:image" content="'.$thumbnail_url.'" />';
 }
-elseif (file_exists('google.src'))
+
+if (strlen($body->social_title) > 0)
 {
-	$google_anayltics = file_get_contents('google.src');
+	$t = str_replace('"', '\\"', $body->social_title);
+	$social_html .= "\n\t" . '<meta property="og:title" content="'.$t.'" />';
+}
+
+if (strlen($body->social_desc) > 0)
+{
+	$d = str_replace('"', '\\"', $body->social_desc);
+	$social_html .= "\n\t" . '<meta property="og:description" content="'.$d.'" />';
 }
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-	<title><?=$body->title?></title>
+	<title><?=Pico_GetPageTitle()?></title>
 	<link href="<?=$body->url('site/style.php?page_id='.CURRENT_PAGE)?>" type="text/css" rel="stylesheet" />
 	<script type="text/javascript">
-	/* global variables */
 	var CURRENT_PAGE = '<?=CURRENT_PAGE?>';
 	var CURRENT_ALIAS = '<?=CURRENT_ALIAS?>';
-	var REQUEST_URI = '<?=$_SERVER['REQUEST_URI']?>';
 	var BASE_URL = '<?=$body->base_url?>';
+	<?php
+	if (USER_ACCESS > 1):
+	?>
+	/* global variables */
+	var REQUEST_URI = '<?=$_SERVER['REQUEST_URI']?>';
+	<?php
+	endif;
+	?>
 	</script>
-	<script type="text/javascript" src="<?=$body->url('site/javascript.php' . ((USER_ACCESS > 2) ? '?mode=reload' : ''))?>"></script>
-	<meta name="description" content="<?=$page_details['description']?>" />
-	<meta name="keywords" content="<?=$page_details['keywords']?>" />
+	<script type="text/javascript" src="<?=$body->url('site/javascript.php' . ((USER_ACCESS > 1) ? '?mode=reload' : ''))?>"></script>
+	<?php
+	if (strlen($page_details['description']) > 0) {
+		echo '<meta name="description" content="'.$page_details['description'].'" />' . "\n";
+	}
+	if (strlen($page_details['keywords']) > 0) {
+		echo '<meta name="keywords" content="'.$page_details['keywords'].'" />' . "\n";
+	}
+	?>
 	<?=Pico_Setting('html_head')?>
 	<?=$body->get_head()?>
+	<?=$social_html?>
 </head>
-<body>
+<body class="<?=$class_text?>">
 <?=$normal_output?>
 <?php
 if (USER_ACCESS > 2)
@@ -163,6 +179,12 @@ if (USER_ACCESS > 2)
 <div id="admin_controller">
 <?php include('includes/admin_panel.php');?>
 </div>
+<?php
+}
+
+if (USER_ACCESS > 1)
+{
+?>
 <div id="action_panel">
 	<div id="ap_title_bg">
 		<div id="ap_title"></div>
@@ -174,7 +196,6 @@ if (USER_ACCESS > 2)
 <?php
 }
 ?>
-<?php if (isset($google_anayltics)) { echo $google_anayltics; } ?>
-<?=Pico_Setting('html_body')?>
+<?=Pico_GetClosingBody()?>
 </body>
 </html>

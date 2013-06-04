@@ -12,16 +12,19 @@ $options['admin_css'] = 'admin.css'; // same as static, but if logged in as mode
 $options['delete_file'] = ''; // file that will be called in addition to removing the component from the content-links table
 $options['install_file'] = ''; // file that will be called after initally installing the component (good time to gather required information for your component, or create an SQL table if needed)
 //$options['on_edit_load'] = 'CKT_LoadFCK(\'ck_text\')'; // javascript code that will happen after load is done
-$options['on_ap_close'] = 'if (CKEDITOR.instances.ck_text) { CKEDITOR.instances.ck_text.destroy(); }'; 
-$options['on_edit_load'] = 'CKEDITOR.replace(\'ck_text\');';// javascript code that will happen after load is done
-/*
+$options['on_ap_close'] = 'CKT_Close()'; 
+$options['on_edit_load'] = 'CKT_Load()';// javascript code that will happen after load is done
+$options['foo'] = 'bar'; // hack fix for update system
+$options['author_editable'] = TRUE; 
+$options['view_setting_can_change'] = TRUE; 
+
 $options['edit_options'] = array(
 	array(
-		'container'=>'blargh',
-		'link_text'=>'test',
-		'inc_file'=>'test.php'
-		'access'=>3
+		'container' => 'co_html_settings',
+		'link_text' => 'HTML Settings',
+		'inc_file'  => 'ckhtml_settings.php',
+		'access'    => 4
 	),
 ); // for custom options while editing
-*/
+
 ?>

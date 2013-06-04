@@ -33,7 +33,7 @@ ReadToEcho('site/core.js');
 echo "\n";
 // if admin include admin.js (not there yet)
 
-if (USER_ACCESS > 2)
+if (USER_ACCESS > 1)
 {
 	ReadToEcho('site/admin.js');
 	
@@ -77,7 +77,7 @@ if ( (sizeof($links_data) > 0) and ($links_data != FALSE ) )
 	}
 }
 
-if (USER_ACCESS > 2)
+if (USER_ACCESS > 1)
 {
 	$content_dirs = GetContentDirs();
 	foreach ($content_dirs as $dir)

@@ -20,6 +20,26 @@ if ($action == 'new_folder')
 		chmod($folder_name, 0777);
 	}
 }
+elseif($action == 'rename_folder')
+{
+	if ((strlen($_GET['old_folder']) > 0) and (strlen($_GET['new_folder']) > 0))
+	{
+		$old_folder = 'upload/' . urldecode($_GET['old_folder']);
+		$new_folder = 'upload/' . urldecode($_GET['new_folder']);
+
+		if (is_dir($old_folder)) {
+			rename($old_folder, $new_folder);
+		}
+	}
+}
+elseif ($action == 'delete_folder')
+{
+	if (strlen($_GET['folder']) > 0)
+	{
+		$folder = urldecode($_GET['folder']);
+		rmdir('upload/' . $folder);
+	}
+}
 elseif ($action == 'new_file')
 {
 	$base = 'upload/';
@@ -28,10 +48,11 @@ elseif ($action == 'new_file')
 	$full_path = $base . $path;
 	
 	$filename = urldecode($_GET['filename']);
-	$full_file = 'includes/uploader/tmp/' . $filename;
+	$full_file = 'includes/tmp/' . $filename;
 	$new_file  = $full_path . $filename;
 	if (file_exists($full_file))
 	{
+		$new_file = str_replace(' ', '-', $new_file);
 		rename($full_file, $new_file);
 		chmod($new_file, 0666);
 	}

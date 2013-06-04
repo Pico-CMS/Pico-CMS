@@ -13,6 +13,7 @@ $options = unserialize($data);
 if (!is_array($options)) { $options = array(); }
 
 require_once('includes/content/external_newsletter/fields.php');
+require_once('includes/content/external_newsletter/functions.php');
 
 $lists     = $options['lists'];
 $listnames = $options['listnames'];
@@ -23,7 +24,7 @@ if (!is_array($lists)) { $lists = array(); }
 	<input type="hidden" name="component_id" id="component_id" value="<?=$component_id?>" />
 	<input type="hidden" name="page_action" value="update_options" />
 	<table border="0" cellpadding="2" cellspacing="1" class="admin_list">
-	<tr class="a">
+	<tr class="b">
 		<td>Newsletter Portal</td>
 		<td colspan="2">
 			<select name="options[newsletter_portal]">
@@ -33,7 +34,7 @@ if (!is_array($lists)) { $lists = array(); }
 			</select>
 		</td>
 	</tr>
-	<tr class="b">
+	<tr class="a">
 		<td>Layout</td>
 		<td colspan="2">
 			<select name="options[layout]">
@@ -43,41 +44,54 @@ if (!is_array($lists)) { $lists = array(); }
 			</select>
 		</td>
 	</tr>
+	<tr class="b">
+		<td>Title Text</td>
+		<td colspan="2">
+			<input type="text" name="options[title_text]" value="<?=$options['title_text']?>" />
+		</td>
+	</tr>
 	<tr class="a">
+		<td>Signup Complete Text</td>
+		<td colspan="2">
+			<input type="text" name="options[signup_complete_text]" value="<?=$options['signup_complete_text']?>" />
+		</td>
+	</tr>
+	<tr class="b">
 		<td>Signup Box Text</td>
 		<td colspan="2">
 			<input type="text" name="options[signup_box_text]" value="<?=$options['signup_box_text']?>" />
 		</td>
 	</tr>
-	<tr class="b">
+	<tr class="a">
 		<td>Email Box Text</td>
 		<td colspan="2">
 			<input type="text" name="options[email_box_text]" value="<?=$options['email_box_text']?>" />
 		</td>
 	</tr>
-	<tr class="a">
+	<tr class="b">
 		<td>Name Box Text</td>
 		<td colspan="2">
 			<input type="text" name="options[name_box_text]" value="<?=$options['name_box_text']?>" />
 		</td>
 	</tr>
-	<tr class="b">
+	<tr class="a">
 		<td>Submit Button Text</td>
 		<td colspan="2">
 			<input type="text" name="options[submit_button_text]" value="<?=$options['submit_button_text']?>" />
 		</td>
 	</tr>
-	<tr class="a">
+	<tr class="b">
 		<td>Custom Submit Button</td>
 		<td colspan="2">
 			<?php
-			$upload_path = $body->url('includes/content/external_newsletter/button_upload.php');
-			$uploader = new Uploader($upload_path, 'EN_SubmitButton', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'BBDE9C');
+
+			$upload_path = $body->url('includes/upload.php');
+			$uploader = new Uploader($upload_path, 'EN_SubmitButton', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'cccccc');
 			
 			if (strlen($options['submit_button']) > 0)
 			{
-				$file = 'includes/content/external_newsletter/buttons/'.$options['submit_button'];
-				if (is_file($file))
+				$file = EN_GetButton($component_id, $options['submit_button']);
+				if ($file != false)
 				{
 					echo '<img src="'.$body->url($file).'" />';
 				}
@@ -89,17 +103,18 @@ if (!is_array($lists)) { $lists = array(); }
 			?>
 		</td>
 	</tr>
-	<tr class="b">
+	<tr class="a">
 		<td>Custom Submit Button (Rollover)</td>
 		<td colspan="2">
 			<?php
-			$upload_path = $body->url('includes/content/external_newsletter/button_upload.php');
-			$uploader = new Uploader($upload_path, 'EN_SubmitButtonRollover', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'cccccc');
+
+			$upload_path = $body->url('includes/upload.php');
+			$uploader = new Uploader($upload_path, 'EN_SubmitButtonRollover', '', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'BBDE9C');
 			
 			if (strlen($options['submit_button']) > 0)
 			{
-				$file = 'includes/content/external_newsletter/buttons/'.$options['submit_button_rollover'];
-				if (is_file($file))
+				$file = EN_GetButton($component_id, $options['submit_button_rollover']);
+				if ($file != false)
 				{
 					echo '<img src="'.$body->url($file).'" />';
 				}

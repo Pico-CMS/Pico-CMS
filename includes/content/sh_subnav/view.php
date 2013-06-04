@@ -43,5 +43,24 @@ if ($settings['test_mode']==1)
 	);
 }
 
+if (($settings['main_nav']!=1) and ($settings['show_section_title'] == 1))
+{
+	$parent = SubNav_GetMainParent($current_entry);
+	$parent_info = $db->assoc('SELECT * FROM `'.$sh_table.'` WHERE `entry_id`=?', $parent);
+
+	if ($parent_info['page_id'] == 0)
+	{
+		$title = $parent_info['text'];
+	}
+	else
+	{
+		$title = $db->result('SELECT `name` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $parent_info['page_id']);
+		$alias = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $parent_info['page_id']);
+		$title = '<a href="'.$body->url($alias).'">'.$title.'</a>';
+	}
+
+	echo '<div class="section_title">'.$title.'</div>';
+}
+
 SubNav_Display($data, $class);
 ?>

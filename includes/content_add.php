@@ -42,13 +42,15 @@ if ($type == 1)
 		foreach ($drop as $folder=>$section)
 		{
 			$options = GetContentOptions($folder);
-			
-			$components .= '<optgroup label="'.$options['title'].'">';
-			foreach ($section as $key => $val)
+			if (sizeof($section) > 0)
 			{
-				$components .= '<option value="'.$key.'">'.$val.'</option>';
+				$components .= '<optgroup label="'.$options['title'].'">';
+				foreach ($section as $key => $val)
+				{
+					$components .= '<option value="'.$key.'">'.$val.'</option>';
+				}
+				$components .= '</optgroup>';
 			}
-			$components .= '</optgroup>';
 		}
 	}
 	$components .= '</select>';

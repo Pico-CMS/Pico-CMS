@@ -19,7 +19,7 @@ $theme_url = $body->base_url . 'themes/'.$page_theme.'/';
 
 ReadTheme('site/main.css', $body->base_url); // main css
 
-if (USER_ACCESS > 2)
+if (USER_ACCESS > 1)
 {
 	// include admin CSS file
 	ReadTheme('site/admin.css', $body->base_url);

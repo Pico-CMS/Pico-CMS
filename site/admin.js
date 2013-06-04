@@ -723,11 +723,11 @@ function Pico_VerifyContentDescription(obj)
 	Pico_VerifyField(indicator, result, function() { PicoFormCheck(form); });
 }
 
-function Pico_VerifyUsername()
+function Pico_VerifyUsername(user_id)
 {
 	var form = document.getElementById('user_form');
 	var username = urlencode(form.elements.username.value);
-	var target_url = url('includes/ap_actions.php?ap_action=check_user&username='+username);
+	var target_url = url('includes/ap_actions.php?ap_action=check_user&username='+username+'&user_id='+user_id);
 	new Ajax.Request(target_url, { onComplete: function(t) {
 		var obj = document.getElementById('username_indicator');
 		Pico_VerifyField(obj, t.responseText, function() { PicoFormCheck(form); });
@@ -743,7 +743,7 @@ function PicoFormCheck(form)
 	for (x=0; x<fields.length; x++)
 	{
 		var el = fields[x];
-		if (el.title == 'OK!')
+		if (el.title != 'ERROR!') 
 		{
 			good++;
 		}
@@ -904,8 +904,7 @@ function Pico_MoveClick(destination)
 
 function Pico_MoveContent(obj)
 {
-	var node_id = obj.parentNode.id;
-	var component_id = parseFloat(node_id.split('_').pop());
+	var component_id = $(obj).getAttribute('component_id');
 	pico_move_source = component_id;
 	Pico_ClearEditModes('none');
 	
@@ -922,11 +921,8 @@ function Pico_MoveContent(obj)
 
 function Pico_DeleteContent(obj)
 {
-	var node_id = obj.parentNode.id;
-	var component_id = parseFloat(node_id.split('_').pop());
-	
-	var target_url = url('includes/content_delete.php?component_id='+component_id+'&page_id='+CURRENT_PAGE);
-	
+	var component_id = $(obj).getAttribute('component_id');
+	var target_url   = url('includes/content_delete.php?component_id='+component_id+'&page_id='+CURRENT_PAGE);
 	Pico_DisplayAP(target_url, 'Delete Content', 300, 200);
 }
 
@@ -955,9 +951,9 @@ function Pico_EditContentId(component_id, request_uri, page_id)
 
 function Pico_EditContent(obj, request_uri, page_id)
 {
-	var node_id = obj.parentNode.id;
-	var component_id = parseFloat(node_id.split('_').pop());
-	var target_url = url('includes/ap_actions.php?ap_action=load_edit&component_id='+component_id+'&page_id='+page_id+'&ru='+urlencode(request_uri));
+	var component_id = $(obj).getAttribute('component_id');
+	var instance_id  = $(obj).getAttribute('instance_id');
+	var target_url   = url('includes/ap_actions.php?ap_action=load_edit&component_id='+component_id+'&instance_id='+instance_id);
 	
 	var complete_func = function() {
 		Pico_PrepEdit();
@@ -1357,9 +1353,21 @@ function Pico_SaveJS(form)
 
 function Pico_UpdateComponent(form)
 {
-	new Ajax.Form(form, { onComplete: function() {
-		alert('Settings Saved');
-	}} );
+	var c = true;
+	if (form.elements.view_setting != null)
+	{
+		if (form.elements.vs_orig.value != form.elements.view_setting.value)
+		{
+			c = confirm("Are you sure you want to change the view setting? You current data for this component will be lost.");
+		}
+	}
+
+	if (c)
+	{
+		new Ajax.Form(form, { onComplete: function() {
+			alert('Settings Saved');
+		}} );
+	}	
 }
 
 function Pico_BulkAddContent()
@@ -1374,6 +1382,24 @@ function Pico_BulkAddSubmit(form)
 		alert('Bulk Add Complete');
 		Pico_CloseAP();
 	} } );
+}
+
+function Pico_SaveComponentSettings(form, callback)
+{
+	form.elements.submitbtn.disabled = true;
+	new Ajax.Form(form, { onComplete: function() {
+		form.elements.submitbtn.disabled = false;
+		// try to callback, this will be a string
+		try {
+			// eval returns an object if it exists that we can call
+			eval(callback)();
+		}
+		catch(err) {
+			// log the error to the console, the settings still did save though
+			console.log(err);
+			alert('Settings Saved');
+		}
+	}});
 }
 
 shortcut.add("Ctrl+Shift+E",function() {

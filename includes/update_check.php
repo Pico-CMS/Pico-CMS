@@ -61,12 +61,13 @@ else
 		foreach ($xml->files->file as $file)
 		{
 			$action       = (string) $file->action;
+			$filename     = (string) $file->filename;
 			
 			// only files can be edited, and we only need to check for update if its an edit, 
 			// if its a new or deleted file we will add or delete as needed
-			if ($action == 'edit')
+			if (($action == 'edit') and (is_file($filename)))
 			{
-				$filename     = (string) $file->filename;
+				
 				$previous_md5 = (string) $file->previous_md5;
 				
 				// get the md5 of this file

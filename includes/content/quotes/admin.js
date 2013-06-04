@@ -33,3 +33,10 @@ function Q_Delete(quote_id)
 		} } );
 	}
 }
+
+function Q_SaveSettings(form)
+{
+	new Ajax.Form(form, { onComplete: function() {
+		alert('Settings Saved');
+	} } );
+}

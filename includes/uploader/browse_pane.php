@@ -16,7 +16,6 @@ function format_bytes($size) {
     return round($size, 2).$units[$i];
 }
 
-
 if (USER_ACCESS < 3) { exit(); }
 
 $base = 'upload/';
@@ -69,7 +68,7 @@ if (sizeof($files) > 0)
 			$source = $full_path . $file;
 			$mtime = filemtime($source);
 			$extension = file_extension($file);
-			$thumbnail = 'includes/uploader/thumbnails/ ' . (md5($mtime . '-' . $file) . '.png');
+			$thumbnail = 'includes/storage/ckhtml/thumbnails/ ' . (md5($mtime . '-' . $file) . '.png');
 			
 			$can_has_thumbs = array('png', 'jpeg', 'jpg', 'gif');
 			$has_thumb = (in_array($extension, $can_has_thumbs)) ? TRUE : FALSE;
@@ -113,7 +112,7 @@ if (sizeof($files) > 0)
 			
 			if ($has_thumb)
 			{
-				$thumbnail = 'includes/uploader/thumbnails/' . (md5($mtime . '-' . $file) . '.png');
+				$thumbnail = 'includes/storage/ckhtml/thumbnails/' . (md5($mtime . '-' . $file) . '.png');
 				if (!file_exists($thumbnail))
 				{
 					make_new_image_ws($source, $thumbnail, 100, 100);

@@ -364,7 +364,7 @@ function Pico_UpdateCoreFiles($ftp)
 					exit('Unable to write to folder: ' . $parent_folder . '('.$filename.')');
 				}
 				
-				if ( ($action == 'edit') or (($action == 'add') and (is_file($filename))) )
+				if ( (($action == 'edit') or ($action == 'add')) and (is_file($filename)) )
 				{
 					// make sure FILE is writable
 					if ( (!is_writable($filename)) and ($ftp_connected) )

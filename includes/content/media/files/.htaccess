@@ -1,0 +1,5 @@
+# Completely block access to script files
+<FilesMatch "\.(php|phps|html|htm|jsp|asp|aspx|ph3|ph4|phl|php3|php4|php5|phpr|phps|phpt|phtm|phtml)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

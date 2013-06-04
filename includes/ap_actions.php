@@ -7,7 +7,57 @@ if ( (isset($_GET['page_id'])) and (is_numeric($_GET['page_id'])) )
 require_once('core.php');
 $action = $_REQUEST['ap_action'];
 
-if (USER_ACCESS < 3) { exit(); }
+$actions = array(
+	'2' => array('reload_container', 'reload_column', 'get_scripts', 'load_edit', 'add_sh_item', 'sh_item_delete', 'sh_item_move', 'sh_hide_delete'),
+	'3' => array('move_content', 'delete_content', 'add_content', 'delete_user', 'edit_page', 'clone_page', 'add_page', 'check_page', 'add_user_profile',
+		'delete_group', 'edit_user', 'add_user', 'check_user', 'delete_page', 'delete_user_profile', 'add_profile_field', 'edit_profile_field', 'move_profile_field',
+		'delete_profile_field', 'export_profile_users', 'sh_unlink_delete', 'save_component_settings'
+	),
+	'4' => array('update_authors', 'update_component', 'save_js', 'save_css', 'update_payment_settings', 'settings'),
+	'5' => array('bulk_clone'),
+);
+
+// This bit of code checks to make sure we have the appropriate level of access for what we are trying to do
+if (USER_ACCESS < 2)
+{
+	exit();
+}
+else
+{
+	$continue = false;
+
+	$x = USER_ACCESS;
+	do
+	{
+		$perms = $actions[$x];
+		if (in_array($action, $perms))
+		{
+			$continue = true;
+			break;
+		}
+		$x--;
+	} while ($x > 1);
+}
+
+if (!$continue) { exit(); }
+
+if ($action == 'update_authors')
+{
+	$authors     = $_POST['authors'];
+	$instance_id = $_POST['instance_id'];
+
+	$db->run('DELETE FROM `'.PICO_AUTHOR_ACCESS.'` WHERE `instance_id`=?', $instance_id);
+	if ((is_array($authors)) and (sizeof($authors) > 0))
+	{
+		foreach ($authors as $user_id)
+		{
+			$db->run('INSERT INTO `'.PICO_AUTHOR_ACCESS.'` (`user_id`, `instance_id`) VALUES (?,?)',
+				$user_id, $instance_id
+			);
+		}
+	}
+	exit();
+}
 
 if ($action == 'move_content')
 {
@@ -142,6 +192,11 @@ if ($action == 'update_component')
 	
 	$result = $db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `access`=?, `edit_lock`=?, `description`=?, `delete_lock`=? WHERE `component_id`=? LIMIT 1', $access, $edit_lock, $desc, $delete_lock, $component_id);
 	if (!$result) { echo $db->error; }
+
+	if (isset($_POST['view_setting']))
+	{
+		$result = $db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `view_setting`=? WHERE `component_id`=? LIMIT 1', $_POST['view_setting'], $component_id);
+	}
 	exit();
 }
 
@@ -167,9 +222,28 @@ if ($action == 'save_css')
 
 if ($action == 'reload_container')
 {
+
 	$component_id = $_GET['component_id'];
 	$req_uri      = urldecode($_REQUEST['ru']);
 	$page_id      = $_GET['page_id'];
+	$_SERVER['REQUEST_URI'] = $req_uri;
+
+	$parts = explode('/', $req_uri); // Break into an array
+	// Lets look at the array of items we have:
+	$params = array();
+	foreach ($parts as $part)
+	{
+		if (strlen($part) > 0)
+		{
+			$params[] = $part;
+		}
+	}
+
+	if ($params[0] == 'print') {
+		array_shift($params);
+	}
+
+	$GLOBALS['params'] = $params;
 	
 	echo GetComponent($component_id, $page_id, $req_uri);
 	exit();
@@ -182,7 +256,10 @@ if ($action == 'reload_column')
 	$page_id = $_GET['page_id'];
 
 	// get parent location from component id
+
+	if (USER_ACCESS > 2) { echo '<div class="content_div_bg">'; }
 	echo GetContent($column, $page_id, $req_uri);
+	if (USER_ACCESS > 2) { echo '</div>'; }
 }
 
 if ($action == 'get_scripts')
@@ -308,15 +385,25 @@ if ($action == 'add_content')
 
 if ($action == 'load_edit')
 {
-	$component_id = (!isset($component_id)) ? $_GET['component_id'] : $component_id;
-	$page_id      = (!isset($page_id)) ? $_GET['page_id'] : $page_id;
-	$req_uri      = (!isset($req_uri)) ? urldecode($_GET['ru']) : $req_uri;
-
+	$component_id      = (!isset($component_id)) ? $_GET['component_id'] : $component_id;
+	$instance_id       = (isset($_GET['instance_id'])) ? $_GET['instance_id'] : null;
 	$component_details = $db->assoc('SELECT * FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
-	$view_setting      = $component_details['view_setting'];
-	$instance_id       = GenerateInstanceID($component_id, $view_setting, $page_id, $req_uri);
+
+	if ($instance_id == null)
+	{
+		// this is more or less here for legacy support
+		$page_id      = (!isset($page_id)) ? $_GET['page_id'] : $page_id;
+		$req_uri      = (!isset($req_uri)) ? urldecode($_GET['ru']) : $req_uri;
+		$view_setting = $component_details['view_setting'];
+		$instance_id  = GenerateInstanceID($component_id, $view_setting, $page_id, $req_uri);
+	}
+
 	$folder            = $component_details['folder'];
 	$options           = GetContentOptions($folder);
+
+	$additional_info = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $component_id);
+	$component_settings = unserialize($additional_info);
+	if (!is_array($component_settings)) { $component_settings = array(); }
 	
 	$edit_file    = 'includes/content/'.$folder.'/'.$options['edit_file'];
 	if ( (file_exists($edit_file)) and (!is_dir($edit_file)) )
@@ -352,8 +439,8 @@ if ($action == 'load_edit')
 			<input type="hidden" name="ap_action" value="save_css" />
 			<input type="hidden" name="component_id" value="'.$component_id.'" />
 			<input type="hidden" name="css" value="" />
-			<textarea name="ta_css_edit" id="ta_css_edit" style="width: 100%; height: 95%" class="codepress css linenumbers-on">'.$css_text.'</textarea><br />
-			<input type="submit" value="Save" />
+			<textarea name="ta_css_edit" id="ta_css_edit" style="width: 100%; height: 425px" class="codepress css linenumbers-on">'.$css_text.'</textarea><br />
+			<input type="submit" value="Save" class="co_button" />
 			</form>';
 			
 			$js = '
@@ -361,45 +448,127 @@ if ($action == 'load_edit')
 			<input type="hidden" name="ap_action" value="save_js" />
 			<input type="hidden" name="component_id" value="'.$component_id.'" />
 			<input type="hidden" name="js" value="" />
-			<textarea name="ta_js_edit" id="ta_js_edit" style="width: 100%; height: 95%" class="codepress css linenumbers-on">'.$component_details['javascript'].'</textarea><br />
-			<input type="submit" value="Save" />
+			<textarea name="ta_js_edit" id="ta_js_edit" style="width: 100%; height: 425px" class="codepress css linenumbers-on">'.$component_details['javascript'].'</textarea><br />
+			<input type="submit" value="Save" class="co_button" />
 			</form>';
-			
-			$settings = '
-			<div>Component ID: '.$component_id.'</div>
-			<div>Instance ID: '.$instance_id.'</div>
-			
-			<form method="post" action="'.$body->url('includes/ap_actions.php').'" onsubmit="Pico_UpdateComponent(this); return false">
-			<input type="hidden" name="ap_action" value="update_component" />
-			<input type="hidden" name="component_id" value="'.$component_id.'" />
 
-			<table border="0" cellpadding="2" cellspacing="1">
-			<tr>
-				<td class="bold">Description</td>
-				<td><input type="text" name="description" class="ap_text" value="'.$component_details['description'].'" /></td>
-			</tr>
-			<tr>
-				<td class="bold">Required Access</td>
-				<td>'.AccessDrop('access', $component_details['access']).'</td>
-			</tr>
-			<tr>
-				<td class="bold">Edit Lock</td>
-				<td><input type="checkbox" name="edit_lock" value="1" '.($component_details['edit_lock']==1?'checked="checked" ':'').'/></td>
-			</tr>
-			<tr>
-				<td class="bold">Delete Lock</td>
-				<td><input type="checkbox" name="delete_lock" value="1" '.($component_details['delete_lock']==1?'checked="checked" ':'').'/></td>
-			</tr>
-			</table>
+			if ($options['view_setting_can_change'] == TRUE)
+			{
+				$vs_form = '<select name="view_setting">'; // show box
+				$view_settings = Pico_GetViewSettings();
+				foreach ($view_settings as $s => $t)
+				{
+					$selected = ($s == $view_setting) ? 'selected="selected"' : '';
+					$vs_form .= '<option value="'.$s.'" '.$selected.'>'.$t.'</option>';
+				}
+				$vs_form .= '</select>';
+				$vs_form .= '<input type="hidden" name="vs_orig" value="'.$view_setting.'" />';
+
+			}
+			else
+			{
+				$vs_form = Pico_TranslateViewSetting($view_setting); // just display it as is
+			}
+
+			$settings = '
+<div class="ap_overflow">
+
+	<form method="post" action="'.$body->url('includes/ap_actions.php').'" onsubmit="Pico_UpdateComponent(this); return false">
+	<input type="hidden" name="ap_action" value="update_component" />
+	<input type="hidden" name="component_id" value="'.$component_id.'" />
+
+	<table cellpadding="2" cellspacing="1" border="0" class="admin_list">
+	<tr>
+		<th colspan="2">Component Information</th>
+	</tr>
+	<tr class="a">
+		<td class="bold">Component ID</td>
+		<td>'.$component_id.'</td>
+	</tr>
+	<tr class="b">
+		<td class="bold">Instance ID</td>
+		<td>'.$instance_id.'</td>
+	</tr>
+	<tr>
+		<th colspan="2">Configure Component</th>
+	</tr>
+	<tr class="a">
+		<td class="bold">View Setting</td>
+		<td>'.$vs_form.'</td>
+	</tr>
+	<tr class="b">
+		<td class="bold">Description</td>
+		<td><input type="text" name="description" class="ap_text" value="'.$component_details['description'].'" /></td>
+	</tr>
+	<tr class="a">
+		<td class="bold">Required Viewing Access</td>
+		<td>'.AccessDrop('access', $component_details['access']).'</td>
+	</tr>
+	<tr class="b">
+		<td class="bold">Edit Lock</td>
+		<td><input type="checkbox" name="edit_lock" value="1" '.($component_details['edit_lock']==1?'checked="checked" ':'').'/></td>
+	</tr>
+	<tr class="a">
+		<td class="bold">Delete Lock</td>
+		<td><input type="checkbox" name="delete_lock" value="1" '.($component_details['delete_lock']==1?'checked="checked" ':'').'/></td>
+	</tr>
+	</table>
+	
+	<input type="submit" value="Update" class="co_button" />
+	</form>
+</div>';
+
+			// get all authors
+			$author_users = $db->force_multi_assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `access`=? ORDER BY `username` ASC', 2);
+			$aform  = '<p>Select which authors have access to edit this component</p>';
 			
-			<input type="submit" value="Update" />
-			</form>';
+
+			if (is_array($author_users))
+			{
+				$aform .= '<form method="post" action="'.$body->url('includes/ap_actions.php').'" onsubmit="Pico_UpdateComponent(this); return false">';
+				$aform .= '<input type="hidden" name="ap_action" value="update_authors" />';
+				$aform .= '<input type="hidden" name="instance_id" value="'.$instance_id.'" />';
+				$aform .= '<table border="0" cellpadding="2" cellspacing="1" class="admin_list">';
+				$aform .= '<tr><th colspan="2">Author List</th></tr>';
+
+				$counter = 0;
+				foreach ($author_users as $author)
+				{
+					$class    = ($counter % 2 == 0) ? 'a' : 'b'; $counter++;
+					$user_id  = $author['id'];
+					$username = $author['username'];
+					$checked  = (Pico_HasAuthorAccess($user_id, $instance_id)) ? 'checked="checked"' : '';
+
+					$aform .= <<<HTML
+<tr class="$class">
+	<td>$username</td>
+	<td><input type="checkbox" name="authors[]" value="$user_id" $checked /></td>
+</tr>
+HTML;
+				}
+
+				$aform .= '</table>';
+				$aform .= '<input type="submit" value="Save" class="co_button" /></form>';
+			}
+			else
+			{
+				$aform .= '<p>You do not have any authors on your site</p>';
+			}
+
+
+
+			$authors = <<<HTML
+<div class="ap_overflow">
+$aform
+</div>
+HTML;
 		}
 		else
 		{
 			$css      = 'You do not have access to this section.';
 			$js       = 'You do not have access to this section.';
 			$settings = 'You do not have access to this section.';
+			$authors  = 'You do not have access to this section.';
 		}
 		
 		
@@ -408,6 +577,11 @@ if ($action == 'load_edit')
 		echo '<div id="co_css" class="co_hidden">'.$css.'</div>';
 		echo '<div id="co_js" class="co_hidden">'.$js.'</div>';
 		echo '<div id="co_display" class="co_hidden">'.$settings.'</div>';
+
+		if ($options['author_editable'] == TRUE)
+		{
+			echo '<div id="co_authors" class="co_hidden">'.$authors.'</div>';
+		}
 		
 		$lower = '';
 		if ( (is_array($options['edit_options'])) and (sizeof($options['edit_options']) > 0) )
@@ -439,6 +613,13 @@ if ($action == 'load_edit')
 		echo '<li class="click" onclick="Pico_COShow(\'co_css\', this, Pico_LoadCssEditor)">CSS</li>';
 		echo '<li class="click" onclick="Pico_COShow(\'co_js\', this, Pico_LoadJsEditor)">Javascript</li>';
 		echo '<li class="click" onclick="Pico_COShow(\'co_display\', this)">Display Settings</li>';
+
+		if ($options['author_editable'] == TRUE)
+		{
+			echo '<li class="click" onclick="Pico_COShow(\'co_authors\', this)">Authors</li>';
+		}
+
+
 		echo $later;
 		echo '</td></tr></table>';
 	}
@@ -495,15 +676,17 @@ if ($action == 'edit_user')
 	$f = $_POST['first_name'];
 	$l = $_POST['last_name'];
 	$e = $_POST['email_address'];
+	$u = $_POST['username'];
 	
 	$user_id = $_POST['user_id'];
 	
 	$result = $db->run('UPDATE `'.DB_USER_TABLE.'` SET 
+		`username`=?,
 		`access`=?,
 		`email_address`=?,
 		`first_name`=?,
 		`last_name`=? WHERE `id`=?',
-		$a, $e, $f, $l, $user_id
+		$u, $a, $e, $f, $l, $user_id
 	);
 	
 	if (is_array($_POST['expiration']))
@@ -624,9 +807,10 @@ if (($action == 'edit_user') or ($action == 'add_user'))
 
 if ($action == 'check_user')
 {
+	$user_id  = $_GET['user_id'];
 	$username = urldecode($_GET['username']);
-	$count = $db->result('SELECT count(*) FROM `'.DB_USER_TABLE.'` WHERE `username`=?', $username);
-	$return = ($count == 0) ? 'GOOD' : 'BAD';
+	$count    = $db->result('SELECT count(*) FROM `'.DB_USER_TABLE.'` WHERE `username`=? AND `id` != ?', $username, $user_id); 
+	$return   = ($count == 0) ? 'GOOD' : 'BAD';
 	echo $return;
 	exit();
 }
@@ -1245,5 +1429,12 @@ if ($action == 'settings')
 	{
 		Pico_Setting($key, $val);
 	}
+}
+
+if ($action == 'save_component_settings')
+{
+	$settings     = Pico_Cleanse($_POST['settings']);
+	$component_id = $_POST['component_id'];
+	$db->run('UPDATE `'.DB_CONTENT.'` SET `additional_info`=? WHERE `component_id`=?', serialize($settings), $component_id);
 }
 ?>

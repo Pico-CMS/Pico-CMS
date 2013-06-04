@@ -10,14 +10,14 @@ $options['admin_js'] = 'admin.js'; // same as static, but if logged in as modera
 $options['admin_css'] = 'admin.css'; // same as static, but if logged in as moderator or higher
 $options['delete_file'] = ''; // file that will be called in addition to removing the component from the content-links table
 $options['install_file'] = ''; // file that will be called after initally installing the component (good time to gather required information for your component, or create an SQL table if needed)
-/*
+
 $options['edit_options'] = array(
 	array(
-		'container'=>'blargh',
-		'link_text'=>'test',
-		'inc_file'=>'test.php'
+		'container'=>'quote_settings',
+		'link_text'=>'Quote Settings',
+		'inc_file'=>'quote_settings.php',
 		'access'=>3
 	),
-); // for custom options while editing
-*/
+); 
+
 ?>

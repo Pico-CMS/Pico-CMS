@@ -47,8 +47,20 @@ function SubNav_Display($data, $class = '', $parent = 0)
 	global $db, $body;
 	$sh_table  = DB_PREFIX . 'pico_site_heirarchy';
 	$num_items = sizeof($data);
-	
+	$num_shown = 0;
+
 	if ($num_items > 0)
+	{
+		foreach ($data as $item)
+		{
+			if ($item['show_in_nav'] == 1)
+			{
+				$num_shown++;
+			}
+		}
+	}
+	
+	if ($num_shown > 0)
 	{
 		echo '<ul class="'.$class.'">';
 		$counter = 0;
@@ -164,6 +176,8 @@ function SubNav_Display($data, $class = '', $parent = 0)
 						//echo '<pre>'.print_r($item['children'], true).'</pre>';
 						$classes[] = 'active_child';
 					}
+					
+					$classes[] = 'item_' . $counter;
 					
 					$class_text = implode(' ', $classes);
 					echo '<li class="'.$class_text.'">';

@@ -50,6 +50,23 @@ if ($action == 'update_options')
 	{
 		$new_options['submit_button_rollover'] = '';
 	}
+
+	$files = array('submit_button', 'submit_button_rollover');
+
+	foreach ($files as $f)
+	{
+		$upload_path = 'includes/tmp/' . $new_options[$f];
+		if (is_file($upload_path))
+		{
+			// move to new home
+			$storage_dir = 'includes/storage/external_newsletter/'.$component_id.'/';
+			$new_path    = $storage_dir . $new_options[$f];
+
+			if (is_file($new_path)) { @unlink($new_path); }
+			$can_write = Pico_StorageDir($storage_dir);
+			if ($can_write) { @rename($upload_path, $new_path); @chmod($new_path, 0666); }
+		}
+	}
 	
 	$db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `additional_info`=? WHERE `component_id`=?', serialize($new_options), $component_id);
 	exit();
@@ -166,4 +183,7 @@ if ($action == 'signup')
 			}
 		}
 	}
+
+	$complete_text = (strlen($options['signup_complete_text']) > 0) ? $options['signup_complete_text'] : 'Signup Complete!';
+	echo $complete_text;
 }

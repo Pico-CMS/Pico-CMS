@@ -1,6 +1,12 @@
 <?php
 require_once('includes/functions.php');
 require_once('includes/database.class.php');
+require_once('includes/ftp.class2.php');
+
+if (!isset($_SESSION['SAVE_SETTINGS']))
+{
+	$_SESSION['SAVE_SETTINGS'] = array(); // we will use this array to save settings for later
+}
 
 function eval_include($file)
 {
@@ -13,26 +19,18 @@ function eval_include($file)
 
 $body = '';
 
+if (isset($_SESSION['DATABASE_INFO']))
+{
+	// establish connection
+	$db = new DataBase($_SESSION['DATABASE_INFO']['host'], $_SESSION['DATABASE_INFO']['username'], $_SESSION['DATABASE_INFO']['password'], $_SESSION['DATABASE_INFO']['name']);
+	$GLOBALS['db'] = $db;
+	define('DB_PREFIX', $_SESSION['DATABASE_INFO']['prefix']);
+}
+
 if (isset($_POST['page_action']))
 {
 	$action = $_POST['page_action'];
-	
-	if ($action == 'verify_ftp')
-	{
-		include('install/verify_ftp.php');
-		if ($_SESSION['FTP_OK'] == TRUE)
-		{
-			$_SESSION['install_step'] = 2;
-		}
-		else
-		{
-			foreach ($ftp_error as $error)
-			{
-				$body .= '<div class="error">'.$error.'</div>';
-			}
-		}
-	}
-	
+
 	if ($action == 'verify_db')
 	{
 		$host = trim($_POST['db']['host']);
@@ -48,7 +46,7 @@ if (isset($_POST['page_action']))
 		}
 		else
 		{
-			$_SESSION['install_step'] = 3;
+			$_SESSION['install_step'] = 2;
 			$_SESSION['DATABASE_INFO'] = array(
 				'host'     => $host,
 				'username' => $user,
@@ -56,13 +54,32 @@ if (isset($_POST['page_action']))
 				'name'     => $name,
 				'prefix'   => trim($_POST['db']['prefix']),
 			);
+
+			header('Location: ' . $_SERVER['REQUEST_URI']);
+			exit(); // reload page
+		}
+	}
+
+	if ($action == 'verify_ftp')
+	{
+		include('install/verify_ftp.php');
+		if ($ftp_success)
+		{
+			$_SESSION['install_step'] = 3;
+			header('Location: ' . $_SERVER['REQUEST_URI']);
+			exit(); // reload page
+		}
+		else
+		{
+			foreach ($ftp_error as $error)
+			{
+				$body .= '<div class="error">'.$error.'</div>';
+			}
 		}
 	}
 	
 	if ($action == 'additional_settings')
 	{
-		// establish connection
-		$db = new DataBase($_SESSION['DATABASE_INFO']['host'], $_SESSION['DATABASE_INFO']['username'], $_SESSION['DATABASE_INFO']['password'], $_SESSION['DATABASE_INFO']['name']);
 	
 		// install SQL
 		
@@ -99,34 +116,40 @@ if (isset($_POST['page_action']))
 		$config = str_replace('[[DOMAIN_PATH]]', $_SERVER['REQUEST_URI'], $config);
 		$config = str_replace('[[INSTALL_PATH]]', getcwd() . '/', $config);
 		$config = str_replace('[[SITE_TITLE]]', stripslashes($settings['site_name']), $config);
+
+		$settings_table = DB_PREFIX . 'pico_settings';
+		foreach ($_SESSION['SAVE_SETTINGS'] as $key=>$val)
+		{
+			$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)',
+				$key, $val
+			);
+		}
 		
 		$h = fopen('includes/config.blank.php', 'w');
 		fwrite($h, $config);
 		fclose($h);
-		
-		rename('includes/config.blank.php', 'includes/config.php');
-		
-		// rewrite htaccess file
-		
-		$htaccess = file_get_contents('install/install.htaccess');
-		$htaccess = str_replace('[[PATH]]', $_SERVER['REQUEST_URI'], $htaccess);
-		
-		$h = fopen('.htaccess', 'w');
-		fwrite($h, $htaccess);
-		fclose($h);
-		
-		// save FTP information
-		
-		$settings_table = str_replace('PREFIX_', $_SESSION['DATABASE_INFO']['prefix'], 'PREFIX_pico_settings');
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'host', $_SESSION['FTP_INFORMATION']['host']);
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'port', $_SESSION['FTP_INFORMATION']['port']);
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'username', $_SESSION['FTP_INFORMATION']['username']);
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'password', $_SESSION['FTP_INFORMATION']['password']);
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'path', $_SESSION['FTP_INFORMATION']['path']);
-		$db->run('INSERT INTO `'.$settings_table.'` (`keyfield`, `keyvalue`) VALUES (?,?)', 'version', '1.0');
+
+		// rename config file with ftp, use exit calls here cause it SHOULDN'T ever happen
+
+		$s = $_SESSION['SAVE_SETTINGS'];
+		$url = 'ftp://' . $s['ftp_username'] . ':' . $s['ftp_password'] . '@' . $s['ftp_host'] . ':' . $s['ftp_port'] . $s['ftp_path'];
+
+		try
+		{
+			$ftp = new Ftp($url, $s['ftp_sftp']);
+		}
+		catch (Exception $e)
+		{
+			$error_msg = $e->getMessage();
+			exit("Error connecting to ftp: $error_msg");
+		}
+
+		if (!$ftp->tryRename('includes/config.blank.php', 'includes/config.php'))
+		{
+			exit("Unable to rename config file");
+		}
 		
 		$_SESSION['install_step'] = 4;
-		
 	}
 }
 
@@ -150,10 +173,7 @@ if ($step == 3)
 if ($step == 4)
 {
 	$body .= eval_include('install/step4.tpl');
-	Pico_Setting('pico_build_version', 1037);
 }
-
-
 
 // prep the template file for output
 $page_html = eval_include('install/install.tpl');

@@ -107,5 +107,3 @@ CREATE TABLE `PREFIX_pico_settings` (
 	`keyfield` varchar(32) NOT NULL,
 	`keyvalue` varchar(255)
 );
->
-INSERT INTO `PREFIX_pico_settings` (`keyfield`, `keyvalue`) VALUES ("pico_build_version", "1037");

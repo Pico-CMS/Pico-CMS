@@ -1,133 +1,145 @@
 <?php
 
-$data   = $db->result('SELECT `additional_info` FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
-$options = unserialize($data);
-if (!is_array($options)) { $options = array(); }
+$additional_info = $db->result('SELECT `additional_info` FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
+$settings        = unserialize($additional_info);
+if (!is_array($settings)) { $settings = array(); }
+
+if (strlen($settings['t_title']) > 0)
+{
+	echo '<div class="title">'.$settings['t_title'].'</div>';
+}
+
+if (!isset($settings['twitter_access']))
+{
+	if (USER_ACCESS >= 3) { echo 'Please autheticate to Twitter by editing this component'; }
+	return;
+}
+
+function object_to_array($data)
+{
+	if (is_array($data) || is_object($data))
+	{
+		$result = array();
+		foreach ($data as $key => $value)
+		{
+			$result[$key] = object_to_array($value);
+		}
+		return $result;
+	}
+	return $data;
+}
+
 $twitter_table = DB_PREFIX . 'twitter_data';
 
-if (sizeof($options) == 0)
+if (sizeof($settings) == 0)
 {
 	echo "Please set up this component before using";
 	return;
 }
 
+// pico consumer codes
+define('CONSUMER_KEY', 'AxjpVpFx58kc715ThIESTQ');
+define('CONSUMER_SECRET', 'JI2gUT2muPiKe9emiLKahz24YVIAShIMTNj7iRS8MA');
+
+$t_config = array(
+	'consumer_key'    => CONSUMER_KEY,
+	'consumer_secret' => CONSUMER_SECRET,
+	'user_token'      => $settings['twitter_access']['oauth_token'],
+	'user_secret'     => $settings['twitter_access']['oauth_token_secret'],
+);
+
 $twitter_info = $db->assoc('SELECT * FROM `'.$twitter_table.'` WHERE `component_id`=?', $component_id);
-if ( (!is_array($twitter_info)) or ((time() - $twitter_info['last_updated']) > 300) )
+$force_update = false;
+
+if (is_array($twitter_info))
 {
-	if ($options['t_search'] == 'yes')
-	{
-		$url = 'http://search.twitter.com/search.rss?q='.urlencode($options['t_name']);
-		//echo $url;
+	// check to see if we have the new style tweets yet.
+	$tweets = unserialize($twitter_info['tweets']);
+	if (!is_array($tweets)) { $force_update = true; } else {
+		if (is_array($tweets[0])) {
+			$force_update = true;
+		}
 	}
-	else
+}
+
+if ( (!is_array($twitter_info)) or ((time() - $twitter_info['last_updated']) > 300) or ($force_update) )
+{
+	require_once('includes/content/twitter/libs/tmhOAuth.php');
+	require_once('includes/content/twitter/libs/tmhUtilities.php');
+	$twitter = new tmhOAuth($t_config);
+
+	if ($settings['t_search'] == 'yes')
 	{
-		$url = 'http://twitter.com/statuses/user_timeline/'.$options['t_name'].'.xml?count=25';
-	}
-	
-	
-	$c   = curl_init($url);
-	curl_setopt($c, CURLOPT_RETURNTRANSFER, 1);
-	$src = curl_exec($c);
-	curl_close($c);
-	
-	if ($options['t_search'] == 'yes')
-	{
-		preg_match_all('/<title>(.*?)<\/title>/', $src, $data);
-		$messages = $data[1];
-		array_shift($messages);
-		
-		//echo '<pre>' . print_r($messages, TRUE) . '</pre>';
-		
-		preg_match_all('/<link>(.*?)<\/link>/', $src, $data);
-		$links = $data[1];
-		array_shift($links);
-		
-		//echo '<pre>' . print_r($links, TRUE) . '</pre>';
-		
-		$info = array(
-			'links' => $links,
-			'messages' => $messages
+		$get_options = array(
+			'count' => 200,
+			'q' => $settings['t_name'],
 		);
-		
-		//array_shift($matches);
+
+		$twitter->request('GET', $twitter->url('1.1/search/tweets'), $get_options);
+		$response = json_decode($twitter->response['response']);
+		$response = $response->statuses;
 	}
 	else
 	{
-		preg_match_all('/<text>(.*)<\/text>/', $src, $data);
-		$info = $data[1];
+		$get_options = array(
+			'count' => 200
+		);
+
+		$twitter->request('GET', $twitter->url('1.1/statuses/user_timeline'), $get_options);
+		$response = json_decode($twitter->response['response']);
 	}
-	
+
+	$tweets = array();
+	$counter = 0;
+	if (sizeof($response) > 0)
+	{
+		foreach ($response as $tweet)
+		{
+			//$t = (array) $t;
+			$tweet = object_to_array($tweet);
+			$tweet = tmhUtilities::entify_with_options($tweet);
+			$tweets[] = $tweet;
+			$counter++;
+			if ($counter >= $settings['t_num'])
+			{
+				break;
+			}
+		}
+	}
+
 	if (!is_array($twitter_info))
 	{
 		$db->run('INSERT INTO `'.$twitter_table.'` (`component_id`, `tweets`, `last_updated`) VALUES (?,?,?)',
-			$component_id, serialize($info), time()
+			$component_id, serialize($tweets), time()
 		);
 	}
 	else
 	{
-		$db->run('UPDATE `'.$twitter_table.'` SET `tweets`=?, `last_updated`=? WHERE `component_id`=?', serialize($info), time(), $component_id);
+		$db->run('UPDATE `'.$twitter_table.'` SET `tweets`=?, `last_updated`=? WHERE `component_id`=?', serialize($tweets), time(), $component_id);
 	}
-	
-	$tweets = $info;
 }
 else
 {
 	$tweets = unserialize($twitter_info['tweets']);
 }
 
-echo '<div class="title">'.$options['t_title'].'</div>';
-
-if (sizeof($tweets) == 0)
-{
-	//$tweets[] = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin a diam at mauris viverra semper.';
-}
-
-//echo '<pre>'.print_r($tweets, true).'</pre>';
-
 if (sizeof($tweets) > 0)
 {
-	$good = 0;
-	$counter = 0;
-	
-	if ($options['t_search'] == 'yes')
+	$shown = 0;
+	foreach ($tweets as $tweet)
 	{
-		$links  = $tweets['links'];
-		$tweets = $tweets['messages'];
-	}
-	
-	foreach ($tweets as $t)
-	{
-		$status = html_entity_decode($t);
-		$text_only = strip_tags($status);
-		
-		if (substr($text_only, 0, 1) != '@')
+		echo '<div class="message tweet">'.$tweet.'</div>';
+		$shown++;
+		if ($shown >= $settings['t_num'])
 		{
-			$status = ereg_replace("[[:alpha:]]+://[^<>[:space:]]+[[:alnum:]/]", "<a href=\"\\0\">\\0</a>", $status);
-			$status = preg_replace("/@([A-Za-z0-9_]+)/ise", "'<a href=\"http://www.twitter.com/\\1\" target=\"_blank\">@\\1</a>'", $status);
-			$status = preg_replace("/#([A-Za-z0-9_]+)/ise", "'<a href=\"http://twitter.com/#search?q=\\1\" target=\"_blank\">#\\1</a>'", $status);
-			
-			if ($options['t_search'] == 'yes')
-			{
-				$link = $links[$counter];
-				# http://twitter.com/ddkurcfeld/statuses/28467336474271744
-				preg_match('/twitter\.com\/(.*)\/statuses/', $link, $matches);
-				$username = $matches[1];
-				$status = '<a href="'.$link.'" target="_blank">'.$username.':</a> ' . $status;
-			}
-			
-			echo '<div class="message">'.$status.'</div>';
-			
-			$good++;
-			if ($options['t_num'] == $good)
-			{
-				break;
-			}
+			break;
 		}
-		$counter++;
 	}
 }
 
-echo '<div class="follow"><a href="http://twitter.com/'.$options['t_name'].'" target="_blank">'.$options['t_text'].'</a></div>';
-
+if (strlen($settings['t_text']) > 0)
+{
+	echo '<div class="follow"><a href="http://twitter.com/'.$settings['t_name'].'" target="_blank">'.$settings['t_text'].'</a></div>';
+}
 
 ?>

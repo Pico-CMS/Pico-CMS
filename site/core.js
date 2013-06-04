@@ -1834,6 +1834,7 @@ Ajax.Updater = Class.create(Ajax.Request, {
     if (receiver = $(receiver)) {
       if (options.insertion) {
         if (Object.isString(options.insertion)) {
+
           var insertion = { }; insertion[options.insertion] = responseText;
           receiver.insert(insertion);
         }
@@ -2901,6 +2902,7 @@ Element._insertionTranslations = {
   before: function(element, node) {
     element.parentNode.insertBefore(node, element);
   },
+
   top: function(element, node) {
     element.insertBefore(node, element.firstChild);
   },
@@ -6605,3 +6607,64 @@ var ap_center = function() {
 
 add_resize_event(ap_center);
 add_scroll_event(ap_center);
+
+
+document.observe("dom:loaded", function() {
+
+  // replace mouseovers
+  
+  $$('img.hover').each(function(el) {
+    var src = el.readAttribute('src');
+    var parts = src.split('.');
+    var ext   = parts.pop();
+    var path  = parts.pop();
+    path      = path + '-hover';
+    parts.push(path);
+    parts.push(ext);
+    var hover_src = parts.join('.');
+
+    el.orig_src  = src;
+    el.hover_src = hover_src;
+
+    $(el).observe('mouseover', function() {
+      $(this).setAttribute('src',this.hover_src);
+    });
+
+    $(el).observe('mouseout', function() {
+      $(this).setAttribute('src',this.orig_src);
+    });
+  });
+
+  // find form elements with default text
+
+  $$('input.text').each(function(el) {
+    if ($(el).getAttribute('dummytext'))
+    {
+      var dummytext = $(el).getAttribute('dummytext');
+
+      if ($(el).getValue() == '') {
+        $(el).setValue(dummytext);
+      }
+
+      $(el).observe('focus', function() {
+        if ($(this).getValue() == dummytext) {
+          $(this).setValue('');
+        }
+
+        if ($(this).getAttribute('pwd') == 'yes') {
+          $(this).setAttribute('type', 'password');
+        }
+      });
+
+      $(el).observe('blur', function() {
+        if ($(this).getValue() == '') {
+          $(this).setValue(dummytext);
+
+          if ($(this).getAttribute('pwd') == 'yes') {
+            $(el).setAttribute('type', 'text');
+          }
+        }
+      });
+    }
+  });
+});

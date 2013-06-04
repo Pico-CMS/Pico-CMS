@@ -188,6 +188,37 @@ function CheckInstanceID($component_id, $instance_id)
 	}
 }
 
+function ShowComponent($component_id, $instance_id, $component_output, $author_editable)
+{
+	global $db, $body;
+
+	$author_mode = FALSE;
+
+	if (($author_editable) and (USER_ACCESS == 2))
+	{
+		if (Pico_HasAuthorAccess(USER_ID, $instance_id))
+		{
+			$author_mode = TRUE;
+		}
+	}
+
+	if (USER_ACCESS > 2) { echo '<div class="content_box_bg" component_id="'.$component_id.'" instance_id="'.$instance_id.'"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
+
+	$content_class  = 'content';
+	$content_class .= (strlen($component_output) == 0) ? ' no_content' : '';
+	$content_class .= ($author_mode) ? ' author' : '';
+	$author_extra   = ($author_mode) ? '<div class="author_link" title="Edit Content" onclick="Pico_EditContentId('.$component_id.', REQUEST_URI, CURRENT_PAGE)"></div>' : '';
+
+	if (strlen($component_output) == 0) { echo '<div class="no_content">'; }
+
+	echo '<div class="header"></div>';
+	echo '<div class="'.$content_class.'">'.$author_extra.$component_output.'</div>';
+	echo '<div class="footer"></div>';
+	if (USER_ACCESS > 2) { echo '<div class="clear"></div></div>'; }
+
+	if (strlen($component_output) == 0) { echo '</div>'; }
+}
+
 function GetComponent($component_id, $page_id, $req_uri)
 {
 	if (strlen($req_uri) == 0) { $req_uri = $_SERVER['REQUEST_URI']; }
@@ -202,18 +233,24 @@ function GetComponent($component_id, $page_id, $req_uri)
 		
 		CheckInstanceID($component_id, $instance_id);
 		$component_options = GetContentOptions($component_info['folder']);
+		$author_editable   = ($component_options['author_editable'] == TRUE) ? TRUE : FALSE;
 		
 		$inc_file = 'includes/content/'.$component_info['folder'].'/'.$component_options['content_file'];
 		if ((file_exists($inc_file)) and (!is_dir($inc_file)))
 		{
+			$additional_info = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $component_id);
+			$component_settings = unserialize($additional_info);
+			if (!is_array($component_settings)) { $component_settings = array(); }
+
 			// same as directly below
-			if (USER_ACCESS > 2) { echo '<div class="content_box_bg"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
-			echo '<div class="header"></div>';
-			echo '<div class="content">';
+			ob_start();
 			include($inc_file);
+			$component_output = ob_get_contents();
+			ob_end_clean();
+
+			echo '<div class="content_'.$component_info['folder'].'">';
+			ShowComponent($component_id, $instance_id, $component_output, $author_editable);
 			echo '</div>';
-			echo '<div class="footer"></div>';
-			if (USER_ACCESS > 2) { echo '<div class="clear"></div></div>'; }
 		}
 	}
 	$return = ob_get_contents();
@@ -221,7 +258,7 @@ function GetComponent($component_id, $page_id, $req_uri)
 	return $return;
 }
 
-function GetContent($container, $page_id, $req_uri = '')
+function GetContent($container, $page_id, $req_uri = '', $foo = false)
 {
 	if (strlen($req_uri) == 0) { $req_uri = $_SERVER['REQUEST_URI']; }
 	global $db, $body;
@@ -240,19 +277,24 @@ function GetContent($container, $page_id, $req_uri = '')
 				$instance_id = GenerateInstanceID($component_id, $component_info['view_setting'], $page_id, $req_uri);
 				
 				$component_options = GetContentOptions($component_info['folder']);
+				$author_editable   = ($component_options['author_editable'] == TRUE) ? TRUE : FALSE;
 				CheckInstanceID($component_id, $instance_id);
 				
 				$inc_file = 'includes/content/'.$component_info['folder'].'/'.$component_options['content_file'];
 				if ((file_exists($inc_file)) and (!is_dir($inc_file)))
 				{
-					echo '<div id="box_'.$component_id.'" class="content_'.$component_info['folder'].'">';
-					if (USER_ACCESS > 2) { echo '<div class="content_box_bg"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
-					echo '<div class="header"></div>';
-					echo '<div class="content">';
+					$additional_info = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $component_id);
+					$component_settings = unserialize($additional_info);
+					if (!is_array($component_settings)) { $component_settings = array(); }
+
+					ob_start();
 					include($inc_file);
-					echo '</div>';
-					echo '<div class="footer"></div>';
-					if (USER_ACCESS > 2) { echo '<div class="clear"></div></div>'; }
+					$component_output = ob_get_contents();
+					ob_end_clean();
+
+					echo '<div id="box_'.$component_id.'" class="content_'.$component_info['folder'].'">';
+					ShowComponent($component_id, $instance_id, $component_output, $author_editable);
+
 					echo '</div>';
 				}
 			}
@@ -267,10 +309,10 @@ function GetContent($container, $page_id, $req_uri = '')
 	return $return;
 }
 
-function ContentDiv($name)
+function ContentDiv($name, $class = '')
 {
 	$bg_layer = '';
-	$html = '<div id="'.$name.'">';
+	$html = '<div id="'.$name.'" class="'.$class.'">';
 	if (USER_ACCESS > 2) { $html .= '<div class="content_div_bg">'; }
 	
 	// get the components in this page and content div
@@ -318,7 +360,8 @@ function IncludeIf($file)
 {
 	if ((file_exists($file)) and (!is_dir($file)))
 	{
-		$ext = strtolower(array_pop(explode('.', basename($file))));
+		$parts = explode('.', basename($file));
+		$ext   = strtolower(array_pop($parts));
 		if ($ext == 'php')
 		{
 			include($file);
@@ -477,12 +520,8 @@ function generate_text($length = 8)
 	{ 
 		// pick a random character from the possible ones
 		$char = substr($possible, mt_rand(0, strlen($possible)-1), 1);
-		
-		if (!strstr($phrase, $char))
-		{ 
-			$phrase .= $char;
-			$i++;
-		}
+		$phrase .= $char;
+		$i++;
 	}
 	return $phrase;
 }
@@ -539,61 +578,57 @@ function SortSelectOptions($a, $b)
 function Pico_ConnectFTP()
 {
 	// get ftp settings
-	
-	$host = Pico_Setting('ftp_host');
-	$port = Pico_Setting('ftp_port');
-	$path = Pico_Setting('ftp_path');
-	$user = Pico_Setting('ftp_username');
-	$pass = Pico_Setting('ftp_password');
-	
-	// for legacy
-	
-	$ftp_host = (strlen($host) > 0) ? $host : Pico_Setting('host');
-	$ftp_port = (is_numeric($port)) ? (int) $port : (int) Pico_Setting('port');
+
+	$path     = Pico_Setting('ftp_path');
 	$ftp_path = (strlen($path) > 0) ? $path : Pico_Setting('path');
-	$ftp_user = (strlen($user) > 0) ? $user : Pico_Setting('username');
-	$ftp_pass = (strlen($pass) > 0) ? $pass : Pico_Setting('password');
-	
-	require_once('includes/ftp/ftp_class.php');
-	
-	ob_start(); // surpress normal ftp class output
-	
-	if (!is_numeric($ftp_port)) { $ftp_port = 21; }
-	
-	$ftp = new ftp(TRUE);
-	$ftp->Verbose = FALSE;
-	$ftp->LocalEcho = FALSE;
-	
-	if(!$ftp->SetServer($ftp_host, $ftp_port, TRUE)) 
+
+	if (!isset($GLOBALS['pico_ftpobj']))
 	{
-		$ftp->quit();
-		$ftp_error[] = "Setting server failed\n";
-	}
-	else
-	{
-		if (!$ftp->connect()) {
-			$ftp_error[] = "Cannot connect\n";
-		}
-		else
+		$host = Pico_Setting('ftp_host');
+		$port = Pico_Setting('ftp_port');
+		$user = Pico_Setting('ftp_username');
+		$pass = Pico_Setting('ftp_password');
+		
+		// for legacy
+		
+		$ftp_host = (strlen($host) > 0) ? $host : Pico_Setting('host');
+		$ftp_port = (is_numeric($port)) ? (int) $port : (int) Pico_Setting('port');
+		$ftp_user = (strlen($user) > 0) ? $user : Pico_Setting('username');
+		$ftp_pass = (strlen($pass) > 0) ? $pass : Pico_Setting('password');
+		
+		require_once('includes/ftp.class2.php');
+
+		$secure = (Pico_Setting('ftp_sftp') == 1) ? TRUE : FALSE;
+		$url = 'ftp://' . $ftp_user . ':' . $ftp_pass . '@' . $ftp_host . ':' . $ftp_port . $ftp_path;
+		
+		try
 		{
-			if (!$ftp->login($ftp_user, $ftp_pass)) {
-				$ftp->quit();
-				$ftp_error[] = "Login failed\n";
-			}
+			$ftp = new Ftp($url, $secure);
 		}
+		catch (Exception $e)
+		{
+			$error_msg = $e->getMessage();
+			return "Error connecting to ftp: $error_msg";
+		}
+
+		// make it so we only need to connect once
+		$GLOBALS['pico_ftpobj'] = $ftp;
 	}
 	
-	ob_end_clean();
+	$ftp = $GLOBALS['pico_ftpobj'];
 	
-	if (sizeof($ftp_error) == 0)
+	// chdir to the main pico dir just in case
+	try
 	{
 		$ftp->chdir($ftp_path);
-		return $ftp;
 	}
-	else
+	catch (Exception $e)
 	{
-		return $ftp_error;
+		$error_msg = $e->getMessage();
+		return "Error connecting to ftp: $error_msg";
 	}
+	
+	return $ftp;
 }
 
 function CheckWritable($path)
@@ -731,11 +766,11 @@ function SiteHeirarchyDisplay($data)
 				
 				$linked =  ($item['linked'] == 1) ? 'Unlink' : 'Link';
 				
-				$up     = '<img class="icon click" src="'.$body->url('includes/icons/arrow-up.png').'" onclick="Pico_SHMoveItem('.$id.', \'up\')" />';
-				$down   = '<img class="icon click" src="'.$body->url('includes/icons/arrow-down.png').'" onclick="Pico_SHMoveItem('.$id.', \'down\')" />';
-				$delete = '<img class="icon click" src="'.$body->url('includes/icons/delete.png').'" onclick="Pico_SHDeleteItem('.$id.')" />';
-				$add    = '<img class="icon click" src="'.$body->url('includes/icons/plus.png').'" onclick="Pico_SHAddItem('.$id.')" />';
-				$hide   = '<img class="icon click" src="'.$body->url('includes/icons/edit.png').'" onclick="Pico_SHHideItem('.$id.')" />';
+				$up     = '<img class="icon click" title="Move Up" src="'.$body->url('includes/icons/arrow-up.png').'" onclick="Pico_SHMoveItem('.$id.', \'up\')" />';
+				$down   = '<img class="icon click" title="Move Down" src="'.$body->url('includes/icons/arrow-down.png').'" onclick="Pico_SHMoveItem('.$id.', \'down\')" />';
+				$delete = '<img class="icon click" title="Delete" src="'.$body->url('includes/icons/delete.png').'" onclick="Pico_SHDeleteItem('.$id.')" />';
+				$add    = '<img class="icon click" title="Add" src="'.$body->url('includes/icons/plus.png').'" onclick="Pico_SHAddItem('.$id.')" />';
+				$hide   = '<img class="icon click" title="Hide" src="'.$body->url('includes/icons/edit.png').'" onclick="Pico_SHHideItem('.$id.')" />';
 				$unlink = '<span class="click" onclick="Pico_SHUnlinkItem('.$id.')">'.$linked.'</span>';
 			}
 			else
@@ -879,7 +914,7 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 			switch($f['type'])
 			{
 				case 'text':
-					$html = '<input type="text" name="field_'.$f_id.'" value="'.$value.'" />';
+					$html = '<input type="text" name="field_'.$f_id.'" class="text" value="'.$value.'" />';
 					break;
 				case 'radio':
 					$html = '';
@@ -897,7 +932,7 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 					}
 					break;
 				case 'dropdown':
-					$html = '<select name="field_'.$f_id.'">';
+					$html = '<div class="select_bg"><select name="field_'.$f_id.'">';
 					$options = explode("\n", trim($f['options']));
 					if (sizeof($options) > 0)
 					{
@@ -910,11 +945,11 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 							$html .= '<option value="'.$o_value.'" '.$selected.'>'.$o.'</option>';
 						}
 					}
-					$html .= '</select>';
+					$html .= '</select></div>';
 					break;
 				case 'checkbox':
 					$checked = ($value == 1) ? 'checked="checked"' : '';
-					$html = '<input type="checkbox" name="field_'.$f_id.'" value="1" '.$checked.' />';
+					$html = '<input type="checkbox" class="checkbox" name="field_'.$f_id.'" value="1" '.$checked.' />';
 					break;
 				case 'check_list':
 					if (!is_array($value)) { $value = unserialize($value); }
@@ -939,7 +974,7 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 							$o_value = str_replace('"', '\"', $o);
 							$checked = (in_array($o, $value)) ? 'checked="checked"' : '';
 							
-							$html .= '<input type="checkbox" name="field_'.$f_id.'[]" value="'.$o_value.'" '.$checked.' /> ' . $o . '<br />';
+							$html .= '<input type="checkbox" class="checklist" name="field_'.$f_id.'[]" value="'.$o_value.'" '.$checked.' /> ' . $o . '<br />';
 						}
 					}
 					break;
@@ -949,7 +984,7 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 					$html .= '<input type="checkbox" name="field_'.$f_id.'" value="1" '.$checked.' /> ' . $f['caption'];
 					break;
 				case 'lg_text':
-					$html = '<textarea class="text" name="field_'.$f_id.'">'.$value.'</textarea>';
+					$html = '<textarea class="text" class="textarea" name="field_'.$f_id.'">'.$value.'</textarea>';
 					break;
 				case 'date':
 					if ( (!is_array($value)) and (is_numeric($value)) )
@@ -960,9 +995,9 @@ function Pico_GetProfileFieldData($profile_id, $values = array())
 						$value['day'] = date('d', $v);
 						$value['year'] = date('Y', $v);
 					}
-					$html = 'Month: <input type="text" name="field_'.$f_id.'[month]" size="2" maxlength="2" value="'.$value['month'].'" /> ';
-					$html .= 'Day: <input type="text" name="field_'.$f_id.'[day]" size="2" maxlength="2" value="'.$value['day'].'" /> ';
-					$html .= 'Year: <input type="text" name="field_'.$f_id.'[year]" size="4" maxlength="4" value="'.$value['year'].'" />';
+					$html = 'Month: <input type="text" class="text_month" name="field_'.$f_id.'[month]" size="2" maxlength="2" value="'.$value['month'].'" /> ';
+					$html .= 'Day: <input type="text" class="text_day" name="field_'.$f_id.'[day]" size="2" maxlength="2" value="'.$value['day'].'" /> ';
+					$html .= 'Year: <input type="text" class="text_year" name="field_'.$f_id.'[year]" size="4" maxlength="4" value="'.$value['year'].'" />';
 					break;
 				case 'info':
 					$html = ''; // blank
@@ -1359,4 +1394,357 @@ function Pico_IsWritable($file, $update_perms = false)
 		return TRUE;
 	}
 }
+
+function Pico_LogUserIn($user_id)
+{
+	// first check to make sure sessions table exists
+
+	global $db;
+	
+	$session_id = session_id();
+	$ip         = getenv('REMOTE_ADDR');
+	$db->run('UPDATE `'.DB_USER_TABLE.'` SET `last_login`=?, `last_ip`=?, `session_id`=? WHERE `id`=?', time(), $ip, $session_id, $user_id);
+
+	$expiration = time() + 1209600; // 2 weeks
+
+	// check for auth token
+	do
+	{
+		$auth_token = generate_text(50);
+		$check = $db->result('SELECT count(1) FROM `'.PICO_SESSIONS.'` WHERE `auth_token`=?', $auth_token);
+	} while ($check == 1);
+	
+
+	$db->run('INSERT INTO `'.PICO_SESSIONS.'` (`session_id`, `user_id`, `expiration`, `auth_token`) VALUES (?,?,?,?)',
+		$session_id, $user_id, $expiration, $auth_token
+	);
+	
+	// establish cookie
+	
+	$session_data = array(
+		'ip_address' => $ip,
+		'session_id' => $session_id,
+		'auth_token' => encrypt($auth_token)
+	);
+	
+	$sd = base64_encode(serialize($session_data));
+	setcookie('keep_session', $sd, time()+1209600, '/', CookieDomain());
+}
+
+// Verifies a pico session, returns user id on success, 0 for no session
+
+function Pico_VerifySession()
+{
+	global $db;
+
+	$check = $db->force_multi_assoc('SHOW TABLES LIKE ?', PICO_SESSIONS);
+	if (!is_array($check)) 
+	{
+		$session_table = PICO_SESSIONS;
+		$db->run(<<<SQL
+CREATE TABLE IF NOT EXISTS `$session_table` (
+  `session_id` varchar(100) NOT NULL,
+  `user_id` bigint(11) NOT NULL,
+  `expiration` bigint(11) NOT NULL,
+  `auth_token` varchar(50) NOT NULL
+);
+SQL
+);
+	}
+
+	if (!isset($_COOKIE['keep_session'])) { return 0; }
+
+	$session_data = unserialize(base64_decode($_COOKIE['keep_session']));
+	if (!is_array($session_data)) { exit(); } // hack attempt
+
+	// delete old sessions
+	$db->run('DELETE FROM `'.PICO_SESSIONS.'` WHERE `expiration`<?', time());
+
+	// see if a valid session
+	$user_id = $db->result('SELECT `user_id` FROM `'.PICO_SESSIONS.'` WHERE `session_id`=? AND `auth_token`=?', 
+		$session_data['session_id'], decrypt($session_data['auth_token'])
+	);
+
+	if (is_numeric($user_id))
+	{
+		$user_data = $db->assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `id`=?', $user_id);
+		$user_ip   = getenv('REMOTE_ADDR');
+		$db->run('UPDATE `'.DB_USER_TABLE.'` SET `last_login`=?, `last_ip`=? WHERE `id`=?', time(), $user_ip, $user_id);
+
+		return $user_data['id'];
+
+		//define('USER_ACCESS', $user_data['access']);
+		//define('USER_ID', $user_data['id']);
+	}
+	else
+	{
+		// destroy cookie
+		$domain = CookieDomain();
+		setcookie('keep_session', '', time() - 3600, '/', $domain);
+
+		return 0;
+		//define('USER_ACCESS', 0);
+	}
+}
+
+function Pico_GetViewSettings()
+{
+	$settings = array(
+		0 => 'Always the same',
+		1 => 'Different on each page (http://example.com/XXX)',
+		2 => 'Different on each sub-page (http://example.com/page/XXX)',
+		3 => 'Different everywhere (http://example.com/XXX/YYY/ZZZ)',
+		4 => 'Different for each main section (based on Site Hierarchy)',
+	);
+
+	return $settings;
+}
+
+function Pico_TranslateViewSetting($view_setting)
+{
+	$settings = Pico_GetViewSettings();
+	return $settings[$view_setting];
+}
+
+function Pico_HasAuthorAccess($user_id, $instance_id)
+{
+	global $db;
+
+	$author_table = PICO_AUTHOR_ACCESS;
+	$db->run(<<<SQL
+CREATE TABLE IF NOT EXISTS `$author_table` (
+  `user_id` bigint(11) NOT NULL,
+  `instance_id` varchar(32) NOT NULL
+);
+SQL
+);
+
+	$has_access = (int) $db->result('SELECT count(1) FROM `'.PICO_AUTHOR_ACCESS.'` WHERE `user_id`=? AND `instance_id`=?', $user_id, $instance_id);
+	$return = ($has_access > 0) ? TRUE : FALSE;
+	return $return;
+}
+
+function Pico_Cleanse($post, $strip_tags = false)
+{
+	foreach ($post as $key=>$val)
+	{
+		if (is_string($val))
+		{
+			if ($strip_tags)
+			{
+				$val = strip_tags($val);
+			}
+			$post[$key] = trim(stripslashes($val));
+		}
+		elseif (is_array($val))
+		{
+			$post[$key] = Pico_Cleanse($val, $strip_tags);
+		}
+	}
+	return $post;
+}
+
+function Pico_GetClosingBody()
+{
+	// define google analytics
+	global $body;
+
+	$output = '';
+
+	if (Pico_Setting('use_google_analytics') == 1)
+	{
+		$ua_code = Pico_Setting('ga_code');
+		$google_anayltics = <<<HTML
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("$ua_code");
+pageTracker._trackPageview();
+} catch(err) {}</script>
+HTML;
+	}
+	elseif (file_exists('google.src'))
+	{
+		$google_anayltics = file_get_contents('google.src');
+	}
+
+	$output .= $google_anayltics;
+	$output .= Pico_Setting('html_body');
+	return $output;
+}
+
+function Pico_GetPageTitle()
+{
+	global $body;
+	$title_parts = $body->get_title();
+
+	$parts = array();
+	$shown_component = false;
+
+	if (Pico_Setting('title_show_3') == 1)
+	{
+		if (isset($title_parts[1]))
+		{
+			$parts[] = $title_parts[1];
+			$shown_component = true;
+		}
+	}
+
+	if (Pico_Setting('title_show_2') == 1)
+	{
+		if ((Pico_Setting('title_part3_option') == 2) or ($shown_component == false))
+		{
+			$parts[] = $title_parts[0];
+		}
+	}
+
+	if (Pico_Setting('title_show_1') == 1)
+	{
+		$parts[] = Pico_Setting('global_site_title');
+		$index++;
+	}
+
+	$title_string = implode(Pico_Setting('title_separator'), $parts);
+
+	if (trim(strlen($title_string)) == 0) {
+		// legacy
+		$title_string = $title_parts[0]; // shows "www_title" or page name as title
+	}
+	return $title_string;
+}
+
+// returns ftp_obj if successful, false if not
+function Pico_GetFTPObject()
+{
+	// get ftp object if we need one
+	if (!isset($GLOBALS['pico_ftp_obj']))
+	{
+		$ftp = @Pico_ConnectFTP();
+		$GLOBALS['pico_ftp_obj'] = $ftp;
+	}
+
+	$ftp = $GLOBALS['pico_ftp_obj'];
+	if (is_object($ftp)) { return $ftp; }
+
+	return false;
+}
+
+// makes a given directory exist and writable
+function Pico_FTPWritable($directory)
+{
+	$path       = explode('/', trim($directory, '/'));
+	$start_path = getcwd();
+
+	// get it at the beginning
+	$ftp = Pico_GetFTPObject();
+
+	while ($folder = array_shift($path))
+	{
+		if (!is_dir($folder))
+		{
+			// make the folder
+
+			// just make if parent happens to already be writable
+			// this will help sites with no ftp
+			if (is_writable(getcwd())) 
+			{
+				mkdir($folder); 
+				chmod($folder, 0777);
+			} 
+			else
+			{
+				// make it with ftp
+				if ($ftp == false) { return false; }
+
+				try 
+				{
+					$ftp->mkdir($folder);
+				} 
+				catch (Exception $e) 
+				{
+					return false;
+				}
+			}
+
+			if (!is_dir($folder)) { return false; }
+		}
+
+		// only 777 the LAST folder
+		if ( (sizeof($path) == 0) and (!is_writable($folder)) )
+		{
+			if (is_writable(getcwd()))
+			{
+				chmod($folder, 0777);
+			}
+			else
+			{
+				if ($ftp == false) { return false; }
+
+				try 
+				{
+					$ftp->chmod($folder, 0777);	
+				} 
+				catch (Exception $e) 
+				{
+					return false;
+				}	
+			}
+		}
+
+		// change into the folder so we can do the next folder up
+		try
+		{
+			if (is_object($ftp)) { $ftp->chdir($folder); }
+		}
+		catch (Exception $e)
+		{
+			$error_msg = $e->getMessage();
+			return false;
+		}
+		
+		chdir($folder);
+	}
+
+	// go back to start, if we got this far all is well
+	chdir($start_path);
+	return true;
+}
+
+function Pico_StorageDir($directory)
+{
+	$ftp = Pico_GetFTPObject();
+	$cwd = $ftp->pwd();
+	$base = 'includes/storage/';
+
+	if (substr($directory, 0, strlen($base)) != $base) {
+		//$directory = substr($directory, strlen($base));
+		$directory = $base . $directory;
+	}
+
+	$writable = Pico_FTPWritable($directory);
+
+	$ftp->chdir($cwd);
+	return $writable;
+}
+
+// to get pico settings form because lazy
+function Pico_GetSettingsForm($component_id, $innerHTML, $callback = '')
+{
+	global $body;
+	$url = $body->url('includes/ap_actions.php');
+	$form = <<<HTML
+<form method="post" action="$url" onsubmit="Pico_SaveComponentSettings(this, '$callback'); return false">
+<input type="hidden" name="ap_action" value="save_component_settings" />
+<input type="hidden" name="component_id" value="$component_id" />
+$innerHTML
+<input type="submit" name="submitbtn" class="co_button" value="Save Settings" />
+</form>
+HTML;
+
+	return $form;
+}
+
 ?>

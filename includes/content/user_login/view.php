@@ -46,7 +46,16 @@ if ($_POST['page_action'] == "loggin_in")
 				}
 			}
 			
-			UL_LogUserIn($user_id);
+			if (function_exists('Pico_LogUserIn'))
+			{
+				// use pico login
+				Pico_LogUserIn($user_id);
+			}
+			else
+			{
+				// use "old" login
+				UL_LogUserIn($user_id);
+			}
 			
 			if (strlen($settings['custom_login_url']) > 0)
 			{
@@ -55,7 +64,7 @@ if ($_POST['page_action'] == "loggin_in")
 			}
 			else
 			{
-				header('Location: ' . $page_name);
+				header('Location: ' . $body->url($page_name));
 				exit();
 			}
 		}
@@ -97,61 +106,51 @@ elseif ($_POST['page_action'] == "forgot_password")
 }
 if (!defined("USER_ID"))
 {
-
-?>
-<p class="login-title"><?=$settings['intro-text']?></p>
-<form method="post" action="<?=$_SERVER['REQUEST_URI']?>">
-<input type="hidden" name="component_id" value="<?=$component_id?>"/>
-<input type="hidden" name="page_action" value="loggin_in"/>
-	<table border="0" cellpadding="0" cellspacing="0" class="login_form">
-		<tr>
-			<td>Username</td>
-			<td><input type="text" name="login_username" id="login_username" /></td>
-		</tr>
-		<tr>
-			<td>Password</td>
-			<td><input type="password" name="login_password" /></td>
-		</tr>
-	</table>
-	<input type="submit" value="Log In" />
-</form>
-<p class="login-title"><?=$settings['forgot-pwd-text']?></p>
-<form method="post" action="<?=$_SERVER['REQUEST_URI']?>">
-<input type="hidden" name="component_id" value="<?=$component_id?>"/>
-<input type="hidden" name="page_action" value="forgot_password"/>
-	<table border="0" cellpadding="0" cellspacing="0" class="login_form">
-		<tr>
-			<td>E-mail Address</td>
-			<td><input type="text" name="email_address" /></td>
-		</tr>
-	</table>
-	<input type="submit" value="Reset Password" />
-</form>
-
-
-<?php
+	if ($settings['compact_form'] == 1)
+	{
+		include('includes/content/user_login/layout-compact.php');
+	}
+	else
+	{
+		include('includes/content/user_login/layout-default.php');
+	}
 }
 else
 {
 	// redirect user
-	if (USER_ACCESS < 3)
+	if ($settings['redirect_user'] == 1)
 	{
-		if (strlen($settings['custom_login_url']) > 0)
+		if (USER_ACCESS < 3)
 		{
-			header('Location: ' . $settings['custom_login_url']);
-			
-			exit();
-		}
-		else
-		{
-			if ($page_name != CURRENT_ALIAS)
+			if (strlen($settings['custom_login_url']) > 0)
 			{
-				header('Location: ' . $page_name);
+				header('Location: ' . $settings['custom_login_url']);
 				exit();
 			}
+			else
+			{
+				if ($page_name != CURRENT_ALIAS)
+				{
+					header('Location: ' . $body->url($page_name));
+					exit();
+				}
+			}
 		}
+		return;
 	}
-	return;
+
+	if ($settings['show_logout_text'])
+	{
+		$username = $db->result('SELECT `username` FROM `'.DB_USER_TABLE.'` WHERE `id`=?', USER_ID);
+		$logout_link = $body->url('logout');
+
+		echo <<<HTML
+<div class="logout_win">
+	<p class="current">You are logged in as $username</p>
+	<p class="logout_link"><a href="$logout_link">Log Out</a></p>
+</div>
+HTML;
+	}
 }
 
 ?>

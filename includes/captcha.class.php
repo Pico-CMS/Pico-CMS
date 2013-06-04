@@ -58,7 +58,7 @@ class Captcha
 		{
 			// generate captcha
 			$image = imagecreatefrompng('includes/noise.png'); 
-			$font  = 'includes/calibrib.ttf'; // Tells the script where our font is located and it's name.
+			$font  = 'includes/captcha.ttf'; // Tells the script where our font is located and it's name.
 			$black = imagecolorallocate($image, 0,0,0); // Sets color to black 
 			
 			imagettftext($image, 20, -10, 5, 35, $black, $font, substr($code, 0, 1));

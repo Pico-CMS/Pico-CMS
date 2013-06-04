@@ -26,7 +26,7 @@ $counter = 0;
 
 if ( (is_array($entries)) and (sizeof($entries) > 0) )
 {
-	$output .= '<table border="0" cellpadding="2" cellspacing="1" class="contact_history">';
+	$output .= '<table border="0" cellpadding="2" cellspacing="1" class="admin_list">';
 	$output .= '<tr><th>Date</th><th>Information</th><th>Attachments</th></tr>';
 	foreach ($entries as $entry)
 	{
@@ -52,13 +52,15 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 		{
 			foreach ($files as $filename)
 			{
-				$a_text .= '<div><a href="'.$body->url('includes/content/contact/download.php?entry_id='.$entry_id.'&filename='.urlencode($filename)).'">'.$filename.'</a></div>';
+				$file_parts = explode('_', $filename);
+				array_shift($file_parts);
+				$actual_filename = implode('_', $file_parts);
+
+				$a_text .= '<div><a href="'.$body->url('includes/content/contact/download.php?entry_id='.$entry_id.'&filename='.urlencode($filename)).'">'.$actual_filename.'</a></div>';
 			}
 		}
 		
-		
 		$output .= '<tr class="'.$class.'"><td width="75">'.date('h:i m/d/y', $entry['timestamp']).'</td><td><div class="click" onclick="CF_Toggle(\''.$id.'\')">Show/Hide</div><div id="'.$id.'" style="display: none">'.$info.'</div></td><td width="100">'.$a_text.'</td></tr>';
-		
 	}
 	$output .= '</table>';
 }

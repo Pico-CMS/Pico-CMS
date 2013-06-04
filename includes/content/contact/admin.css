@@ -6,7 +6,7 @@
 #cf_fieldlist
 {
 	overflow-y: scroll;
-	height: 100%;
+	height: 460px;
 	width: 100%;
 	background: #fff;
 	padding: 1px;
@@ -25,4 +25,54 @@ table.contact_history tr.a td
 table.contact_history tr.b td
 {
 	background: #666;
+}
+
+div.cfield_a
+{
+	background: #ccc;
+}
+
+div.cfield_a table td,
+div.cfield_b table td
+{
+	margin: 0;
+	padding: 0;
+}
+
+div.cfield_b
+{
+	background: #fff;
+}
+
+table.cform_fields tr
+{
+	border: 1px #999 solid;
+	background: #fff;
+	margin-bottom: 2px;
+}
+
+table.cform_fields tr td
+{
+	border: 1px #999 solid;
+}
+
+span.cf_group
+{
+	cursor: pointer;
+	color: blue;
+}
+
+span.cf_group:hover
+{
+	text-decoration: underline;
+}
+
+textarea.ap_textarea.cf_textarea
+{
+	height: 15px;
+}
+
+textarea.ap_textarea.cf_textarea:focus
+{
+	height: 75px;
 }

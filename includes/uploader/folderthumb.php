@@ -34,7 +34,7 @@ function folder_thumb($folder)
 		
 		// see if we have a cached_file
 		
-		$cached_location = 'includes/uploader/thumbnails/' . md5(serialize($files)) . '.png';
+		$cached_location = 'includes/storage/ckhtml/thumbnails/' . md5(serialize($files)) . '.png';
 		if (file_exists($cached_location))
 		{
 			return $cached_location;
@@ -58,6 +58,8 @@ function folder_thumb($folder)
 		
 		$desired_width  = 50;
 		$desired_height = 30;
+
+		if (sizeof($files) == 0) { return FALSE; }
 		
 		for ($x = 0; $x < sizeof($files); $x++)
 		{

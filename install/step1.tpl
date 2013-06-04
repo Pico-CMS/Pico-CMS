@@ -1,33 +1,30 @@
 <h1>Welcome to Pico</h1>
 Thank you for choosing pico!
 
+<h2>Step 1 - Database Information</h2>
+
 <form method="post" action="<?=$_SERVER['REQUEST_URI']?>">
-<input type="hidden" name="page_action" value="verify_ftp" />
-<h2>Step 1 - Enter FTP Information</h2>
+<input type="hidden" name="page_action" value="verify_db" />
 <table border="0" cellpadding="3" cellspacing="0">
 <tr>
-	<td>FTP Username</td>
-	<td><input type="text" name="ftp[username]" /></td>
+	<td>DB Host</td>
+	<td><input type="text" name="db[host]" value="localhost" /></td>
 </tr>
 <tr>
-	<td>FTP Password</td>
-	<td><input type="text" name="ftp[password]" /></td>
+	<td>DB Name</td>
+	<td><input type="text" name="db[name]" /></td>
 </tr>
 <tr>
-	<td>FTP Host</td>
-	<td><input type="text" name="ftp[host]" value="127.0.0.1" /></td>
+	<td>DB Username</td>
+	<td><input type="text" name="db[username]" /></td>
 </tr>
 <tr>
-	<td>FTP Port</td>
-	<td><input type="text" name="ftp[port]" value="21" /></td>
+	<td>DB Password</td>
+	<td><input type="text" name="db[password]" /></td>
 </tr>
 <tr>
-	<td>FTP Path (directory to where pico is installed)</td>
-	<td><input type="text" name="ftp[path]" /></td>
-</tr>
-<tr>
-	<td>Manual FTP</td>
-	<td><input type="checkbox" name="ftp[ok]" value="skip" /></td>
+	<td>DB Prefix (prefix all Pico tables will start with, ex: "mysite_")</td>
+	<td><input type="text" name="db[prefix]" value="" /></td>
 </tr>
 </table>
 <input type="submit" value="Next" />

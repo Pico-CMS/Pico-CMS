@@ -1,31 +1,87 @@
 
-function Browser_Load()
+function Browser_Load(folder)
 {
-	Browser_LoadFolder();
+	Browser_LoadFolder(folder);
+}
+
+function Browser_ShowLoading()
+{
+	document.getElementById('browse-load').style.display='block';
+}
+
+function Browser_CloseLoading()
+{
+	document.getElementById('browse-load').style.display='none';
 }
 
 function Browser_LoadFolder(folder)
 {
-	if (folder == null) { folder = '' }
-	
+	document.getElementById('browse-folder').innerHTML = '';
+	if (folder == null) { folder = '/'; }
+	if (folder.length == 0) { folder = '/'; }
+
 	var mode = document.getElementById('browse_mode').value;
 	
 	var target_url = 'browse_folder.php?&mode='+mode+'&path='+urlencode(folder);
 	new Ajax.Updater('browse-folder', target_url);
+
+	// here in case you were in edit mode and then hit a folder
+	var target_url = 'browse_upload.php?mode='+mode;
+	new Ajax.Updater('browse-upload', target_url);
 	
 	Browse_LoadPane(folder);
+}
+
+function Browser_CheckFolderName(foldername)
+{
+	if (foldername.length == 0) { return false; }
+    if (foldername.match(/[^a-zA-Z0-9\-]/gi)) { return false; } else { return true; }
 }
 
 function Browser_NewFolder()
 {
 	var path = document.getElementById('browser_current_path').value;
 	var new_folder = document.getElementById('new_folder_name').value;
+
+	if (Browser_CheckFolderName(new_folder) == false) {
+		alert('Invalid folder name, please only include letters, numbers, and dashes');
+		return;
+	}
 	
 	var target_url = 'browse_actions.php?page_action=new_folder&path='+urlencode(path)+'&folder_name='+urlencode(new_folder);
 	new Ajax.Request(target_url, { onComplete: function() {
 		document.getElementById('new_folder_name').value = '';
 		Browser_LoadFolder(path);
 	} } );
+}
+
+function Browser_RenameFolder(base, old_folder)
+{
+	var new_folder = prompt('Please enter new folder name', old_folder);
+
+	if (Browser_CheckFolderName(new_folder) == false) {
+		alert('Invalid folder name, please only include letters, numbers, and dashes');
+		return;
+	}
+	
+	if ((new_folder) && (new_folder != old_folder))
+	{
+		var target_url = 'browse_actions.php?page_action=rename_folder&old_folder='+urlencode(base+old_folder)+'&new_folder='+urlencode(base+new_folder);
+		new Ajax.Request(target_url, { onComplete: function() {
+			Browser_LoadFolder(base);
+		} } );
+	}
+}
+
+function Browse_DeleteFolder(base, folder)
+{
+	if (confirm('Are you sure you want to remove this folder?'))
+	{
+		var target_url = 'browse_actions.php?page_action=delete_folder&folder='+urlencode(base+folder);
+		new Ajax.Request(target_url, { onComplete: function() {
+			Browser_LoadFolder(base);
+		} } );
+	}
 }
 
 function Browse_FileUploaded(filename)
@@ -49,11 +105,16 @@ function Browse_FilesUploaded()
 
 function Browse_LoadPane(path)
 {
+	document.getElementById('browse-pane').innerHTML = '';
+	Browser_ShowLoading();
+
 	var mode = document.getElementById('browse_mode').value;
 	var fn   = document.getElementById('fn').value;
 	var target_url = 'browse_pane.php?path='+urlencode(path)+'&fn='+fn+'&mode='+mode;
 	
-	new Ajax.Updater('browse-pane', target_url);
+	new Ajax.Updater('browse-pane', target_url, { onComplete: function() {
+		Browser_CloseLoading();
+	}});
 }
 
 function Browse_DeleteFile(filename)

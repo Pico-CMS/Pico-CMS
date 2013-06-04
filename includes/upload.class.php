@@ -83,7 +83,8 @@ class Uploader
 	<param name="quality" value="high" />
 	<param name="$bgfv" value="$bgcv" />
 	<param name="flashvars" value="$fv_text" />
-	<embed src="$swf_path" flashvars="$fv_text" quality="high" $bgfv="$bgcv" width="290" height="38" name="Uploader" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />
+	<param name="wmode" value="transparent" />
+	<embed src="$swf_path" wmode="transparent" flashvars="$fv_text" quality="high" $bgfv="$bgcv" width="290" height="38" name="Uploader" align="middle" allowScriptAccess="sameDomain" allowFullScreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" />
 </object>
 HTML;
 		return $html;

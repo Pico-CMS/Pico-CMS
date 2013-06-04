@@ -19,9 +19,6 @@ else
 {
 	session_start();
 	header('Cache-control: private');
-	require_once('includes/ftp/ftp_class.php');
-	require_once('includes/functions.php');
-	require_once('includes/database.class.php');
 	require_once('install/install.php');
 	exit();
 }
@@ -48,6 +45,8 @@ else
 	define('DB_DROPDOWN', $config['dbprefix'] . 'pico_dropdown');
 	define('DB_TRANSACTION_LOG', $config['dbprefix'] . 'pico_payment_transactions');
 	define('PICO_SETTINGS', $config['dbprefix'] . 'pico_settings');
+	define('PICO_SESSIONS', $config['dbprefix'] . 'pico_sessions');
+	define('PICO_AUTHOR_ACCESS', $config['dbprefix'] . 'pico_author_access');
 	
 	define('ADMIN_EMAIL', $config['admin_email']);
 	define('ADMIN_FROM', $config['admin_from']);
@@ -81,13 +80,32 @@ else
 				$params[] = $part;
 			}
 		}
+
+		$reserved_page_names = array('logout');
 		
 		if (isset($params[0]))
 		{
 			$bool = ($params[0] == 'print') ? TRUE : FALSE;
 			
 			$ca = ($bool) ? $params[1] : $params[0];
-			define('CURRENT_ALIAS', $ca);
+
+			// see if this alias is legit
+			$check = $db->result('SELECT count(1) FROM `'.DB_PAGES_TABLE.'` WHERE `alias`=?', $ca);
+			if (($check == 1) or (in_array($ca, $reserved_page_names)))
+			{
+				define('CURRENT_ALIAS', $ca);
+			}
+			else
+			{
+				// show home page
+				$default_id    = $db->result('SELECT `page_id` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
+				$default_alias = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
+				if ($default_id != FALSE)
+				{
+					define('CURRENT_PAGE', $default_id);
+					define('CURRENT_ALIAS', $default_alias);
+				}
+			}
 			define('PRINTER_FRIENDLY', $bool);
 			
 			if (PRINTER_FRIENDLY)
@@ -126,12 +144,13 @@ if ( (defined('CURRENT_ALIAS')) and (!defined('CURRENT_PAGE')) )
 	}
 }
 
-if (CURRENT_ALIAS == 'login')
+if ($params[0] == 'login')
 {
 	include('includes/login.php');
 }
 else
 {
+	/*
 	if (isset($_COOKIE['keep_session']))
 	{
 		//echo 'still in there!';
@@ -175,7 +194,20 @@ else
 	else
 	{
 		define('USER_ACCESS', 0);
+	}*/
+
+	$pico_user_id = Pico_VerifySession();
+	if ($pico_user_id == 0)
+	{
+		define('USER_ACCESS', 0);
 	}
+	else
+	{
+		$pico_user_access = $db->result('SELECT `access` FROM `'.DB_USER_TABLE.'` WHERE `id`=?', $pico_user_id);
+		define('USER_ACCESS', $pico_user_access);
+		define('USER_ID', $pico_user_id);
+	}
+
 
 	// start a session
 	session_start();

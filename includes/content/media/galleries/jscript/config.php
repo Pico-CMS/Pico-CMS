@@ -82,6 +82,12 @@ $settings = array(
 		'values'=>array('yes', 'no'),
 		'default'=>'yes',
 	),
+	'link_main_image'=>array(
+		'name'=>'Link Main Image',
+		'type'=>'select',
+		'values'=>array('yes', 'no'),
+		'default'=>'yes',
+	),
 	
 );
 ?>

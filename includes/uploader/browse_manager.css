@@ -60,10 +60,12 @@
 	border-right: 1px #aaa solid;
 	border-top: 1px #aaa solid;
 	left: 160px;
-	right: 160px;
+	right: 0;
 	bottom: 0;
-	height: 100px;
+	height: 70px;
 	position: absolute;
+	padding-top: 30px;
+	padding-left: 30px;
 }
 
 #browse-actions
@@ -81,7 +83,7 @@
 {
 	top: 0;
 	bottom: 100px;
-	right: 160px;
+	right: 0;
 	left: 160px;
 	position: absolute;
 	border-left: 1px #ccc solid;
@@ -89,15 +91,41 @@
 	overflow: auto;
 }
 
+div.folder_container
+{
+	width: 125px;
+	margin: 10px auto;
+	text-align: center;
+	position: relative;
+}
+
+div.folder_container .delete
+{
+	position: absolute;
+	z-index: 2;
+	background: url(../icons/delete.png) center no-repeat;
+	cursor: pointer;
+	width: 16px;
+	height: 16px;
+	top: 0;
+	right: 0;
+}
+
+div.folder_container div.dirname
+{
+	color: blue;
+	cursor: pointer;
+}
+
+div.folder_container div.dirname:hover
+{
+	text-decoration: underline;
+}
 
 div.browse_folder
 {
-	width: 125px;
-	padding-top: 100px;
-	height: 15px;
-	text-align: center;
+	height: 100px;
 	background: url(folder.png) top center no-repeat;
-	margin: 10px auto;
 	cursor: pointer;
 	position: relative;
 }
@@ -309,4 +337,26 @@ div.noprev
 	height: 46px;
 	padding-top: 40px;
 	text-align: center;
+}
+
+#browse-load
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: url(black75.png);
+	z-index: 2;
+	display: none;
+}
+
+#browse-loading
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: url(loading.gif) center no-repeat;
 }

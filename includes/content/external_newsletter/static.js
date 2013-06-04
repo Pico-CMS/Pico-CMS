@@ -6,16 +6,9 @@ function EN_Signup(form)
 	}
 	
 	new Ajax.Form(form, { onComplete: function(t) {
-		if (t.responseText.length == 0)
-		{
-			alert('Signup Complete!');
+		if (form.elements.submitbtn) {
+			form.elements.submitbtn.disabled = false;
 		}
-		else
-		{
-			if (form.elements.submitbtn) {
-				form.elements.submitbtn.disabled = false;
-			}
-			alert('Error: ' + t.responseText);
-		}
+		alert(t.responseText);
 	} } );
 }

@@ -13,6 +13,7 @@ if ($page_action == 'edit_user')
 	$disabled = '';
 	$default_user_access = $user_info['access'];
 	$pwd = '000000';
+	$username  = $user_info['username'];
 }
 else
 {
@@ -21,6 +22,7 @@ else
 	$default_user_access = USER_ACCESS;
 	$pwd = '';
 	$user_id = 0;
+	$username  = '';
 }
 
 // get all the groups that have a profile
@@ -53,17 +55,10 @@ if ( (is_array($user_profile_groups)) and (sizeof($user_profile_groups) > 0) )
 <tr>
 	<td colspan="2" class="title">Required Information</td>
 </tr>
-<?php
-if ($page_action == 'add_user')
-{
-?>
 <tr>
 	<td>Username</td>
-	<td><input type="text" name="username" class="ap_text float_left" onchange="Pico_VerifyUsername()" /><div id="username_indicator" class="indicator"></div></td>
+	<td><input type="text" name="username" value="<?=$username?>" class="ap_text float_left" onchange="Pico_VerifyUsername(<?=$user_id?>)" /><div id="username_indicator" class="indicator"></div></td>
 </tr>
-<?php
-}
-?>
 <tr>
 	<td>Password<br /><span class="mini">6+ Characters</td>
 	<td><input type="password" name="password" value="<?=$pwd?>" class="ap_text float_left" onchange="Pico_VerifyPassword()" /><div id="password_indicator" class="indicator"></div></td>

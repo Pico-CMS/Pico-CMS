@@ -3,6 +3,23 @@ chdir('../../');
 require_once('core.php');
 if (USER_ACCESS < 3) { exit(); }
 
+// update 5/30... make sure tmp/thumbnails are (re)moved
+
+if (is_dir('includes/uploader/tmp'))
+{
+	$ftp = Pico_GetFTPObject();
+	if ($ftp !== false) { $ftp->deleteRecursive('includes/uploader/tmp'); } else { echo 'Unable to delete your tmp directory, this directory needs to be removed.'; exit(); }
+}
+
+if (is_dir('includes/uploader/thumbnails'))
+{
+	if (Pico_StorageDir('ckhtml/thumbnails'))
+	{ 
+		$ftp = Pico_GetFTPObject();
+		if ($ftp !== false) { $ftp->deleteRecursive('includes/uploader/thumbnails'); } else { echo 'Unable to delete your thumbnails directory, this directory needs to be removed.'; exit(); }
+	}
+}
+
 $mode = isset($_GET['mode']) ? $_GET['mode'] : 'all';
 
 ?>
@@ -23,6 +40,7 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'all';
 <body onmousemove="Edit_CropDrag(event)">
 	<input type="hidden" id="browse_mode" value="<?=$mode?>" />
 	<div id="browse-manager">
+		<div id="browse-load"><div id="browse-loading"></div></div>
 		<?php
 		$w = (isset($_GET['width'])) ? $_GET['width'] : 0;
 		$h = (isset($_GET['height'])) ? $_GET['height'] : 0;
@@ -50,11 +68,9 @@ $mode = isset($_GET['mode']) ? $_GET['mode'] : 'all';
 		<div id="browse-upload">
 			<?php include('includes/uploader/browse_upload.php'); ?>
 		</div>
-		
-		<div id="browse-queue"></div>
-		<div id="browse-actions"></div>
 	</div>
+	
 	<script type="text/javascript">
-	Browser_Load();
+	Browser_Load('<?=$_SESSION['browse_last_folder_path']?>');
 	</script>
 </body>

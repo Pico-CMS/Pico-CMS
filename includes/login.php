@@ -15,36 +15,9 @@ if (isset($_POST['login_username']))
 	$user_id = $db->result('SELECT `id` FROM `'.DB_USER_TABLE.'` WHERE `username`=? AND `password`=?', $username, $password);
 	if ($user_id != FALSE)
 	{
-		// see if a session exists
 		session_start();
-		$domain = CookieDomain();
-		
-		if (isset($_COOKIE['keep_session']))
-		{
-			// log them out
-			
-			$session_data = unserialize(base64_decode($_COOKIE['keep_session']));
-			$db->run('UPDATE `'.DB_USER_TABLE.'` SET `session_id`=? WHERE `session_id`=?', '', $session_data['session_id']);
-			
-			setcookie('keep_session', '', time() - 3600, '/', $domain);
-			setcookie(session_name(), '', time() - 42000, '/');
-			session_destroy();
-			session_start();
-		}
-		
-		$session_id = session_id();
-		$ip         = getenv('REMOTE_ADDR');
-		$db->run('UPDATE `'.DB_USER_TABLE.'` SET `last_login`=?, `last_ip`=?, `session_id`=? WHERE `id`=?', time(), $ip, $session_id, $user_id);
-		
-		// establish cookie
-		
-		$session_data = array(
-			'ip_address' => $ip,
-			'session_id' => $session_id,
-		);
-		
-		$sd = base64_encode(serialize($session_data));
-		$good = setcookie('keep_session', $sd, time()+1209600, '/', $domain);
+
+		Pico_LogUserIn($user_id);
 		
 		if ($request == $body->url('login'))
 		{

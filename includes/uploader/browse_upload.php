@@ -7,7 +7,7 @@ if (!defined('USER_ACCESS'))
 }
 if (USER_ACCESS < 3) { exit(); }
 
-$upload_path = $body->url('includes/uploader/upload.php');
+$upload_path = $body->url('includes/upload.php');
 if ($mode == 'image')
 {
 	$uploader = new Uploader($upload_path, 'Browse_FileUploaded', 'Browse_FilesUploaded', '.jpg, .png, .gif', 'Image Files (jpg/png/gif)', '000000', 'cccccc');

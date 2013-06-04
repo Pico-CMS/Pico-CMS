@@ -46,7 +46,7 @@ $file_html = file_get_contents($body_file);
 
 // get all the positions...
 
-preg_match_all('/ContentDiv\([\'"]([^\)]+)[\'"]\)/', $file_html, $matches);
+preg_match_all('/ContentDiv\([\'"]([^\)]+)[\'"]/U', $file_html, $matches);
 
 if (!isset($matches[1])) { echo 'No ContentDiv\'s Found'; return; }
 
