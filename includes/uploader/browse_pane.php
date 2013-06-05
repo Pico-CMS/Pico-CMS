@@ -75,7 +75,7 @@ if (sizeof($files) > 0)
 			
 			$link = "window.opener.CKEDITOR.tools.callFunction($fn, '".addslashes($body->url($source))."', ''); window.close()";
 			
-			if ($has_thumb)
+			if (($has_thumb) and (Pico_StorageDir('ckhtml/thumbnails/')))
 			{
 				if (!file_exists($thumbnail))
 				{
