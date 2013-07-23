@@ -85,7 +85,7 @@ else
 			}
 		}
 
-		$reserved_page_names = array('logout', 'login');
+		$reserved_page_names = array('logout', 'login', 'cleanup');
 		
 		if (isset($params[0]))
 		{
