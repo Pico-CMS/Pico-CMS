@@ -11,7 +11,7 @@ $actions = array(
 	'2' => array('reload_container', 'reload_column', 'get_scripts', 'load_edit', 'add_sh_item', 'sh_item_delete', 'sh_item_move', 'sh_hide_delete'),
 	'3' => array('move_content', 'delete_content', 'add_content', 'delete_user', 'edit_page', 'clone_page', 'add_page', 'check_page', 'add_user_profile',
 		'delete_group', 'edit_user', 'add_user', 'check_user', 'delete_page', 'delete_user_profile', 'add_profile_field', 'edit_profile_field', 'move_profile_field',
-		'delete_profile_field', 'export_profile_users', 'sh_unlink_delete', 'save_component_settings'
+		'delete_profile_field', 'export_profile_users', 'sh_unlink_delete', 'save_component_settings', 'activate_user'
 	),
 	'4' => array('update_authors', 'update_component', 'save_js', 'save_css', 'update_payment_settings', 'settings'),
 	'5' => array('bulk_clone'),
@@ -388,13 +388,13 @@ if ($action == 'load_edit')
 	$component_id      = (!isset($component_id)) ? $_GET['component_id'] : $component_id;
 	$instance_id       = (isset($_GET['instance_id'])) ? $_GET['instance_id'] : null;
 	$component_details = $db->assoc('SELECT * FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
+	$view_setting      = $component_details['view_setting'];
 
 	if ($instance_id == null)
 	{
 		// this is more or less here for legacy support
 		$page_id      = (!isset($page_id)) ? $_GET['page_id'] : $page_id;
 		$req_uri      = (!isset($req_uri)) ? urldecode($_GET['ru']) : $req_uri;
-		$view_setting = $component_details['view_setting'];
 		$instance_id  = GenerateInstanceID($component_id, $view_setting, $page_id, $req_uri);
 	}
 
@@ -646,9 +646,15 @@ if ($action == 'delete_user')
 			// remove user from group
 			Pico_RemoveUserFromGroup($delete_user['id'], $user_group);
 		}
+
+		// send declined email if the user has never been activated
+		if (($delete_user['user_active'] == 0) and ($delete_user['registration_active'] == null))
+		{
+			Pico_SendAccountDeclinedEmail($delete_user['id']);
+		}
 		
 		// remove user
-		$db->run('DELETE FROM `'.DB_USER_TABLE.'` WHERE `id`=? LIMIT 1', $_GET['user_id']);
+		$db->run('DELETE FROM `'.DB_USER_TABLE.'` WHERE `id`=? LIMIT 1', $delete_user['id']);
 	}
 	exit();
 }
@@ -1436,5 +1442,17 @@ if ($action == 'save_component_settings')
 	$settings     = Pico_Cleanse($_POST['settings']);
 	$component_id = $_POST['component_id'];
 	$db->run('UPDATE `'.DB_CONTENT.'` SET `additional_info`=? WHERE `component_id`=?', serialize($settings), $component_id);
+}
+
+if ($action == 'activate_user')
+{
+	$user_id = $_GET['user_id'];
+	$user_info = $db->assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `id`=?', $user_id);
+
+	if ($user_info['user_active'] == 0)
+	{
+		$db->run('UPDATE `'.DB_USER_TABLE.'` SET `user_active`=? WHERE `id`=?', 1, $user_id);
+		Pico_SendAccountWelcomeEmail($user_id);
+	}
 }
 ?>

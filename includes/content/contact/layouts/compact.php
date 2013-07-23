@@ -92,7 +92,7 @@ Class compact Extends CFLayout
 				}
 				break;
 			case 'file': 
-				$field = '<div class="field_title">' . $field_title . $req . '</div><input type="file" name="fields['.$counter.']" />';
+				$field = '<div class="field_title">' . $field_title . $req . '</div><input type="hidden" name="fields['.$counter.']" value="" /><input type="file" name="fields['.$counter.']" />';
 				break;
 			case 'terms':
 				$_caption = ''; // handle our own captcha

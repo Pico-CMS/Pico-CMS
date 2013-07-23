@@ -50,7 +50,11 @@ else
 	
 	define('ADMIN_EMAIL', $config['admin_email']);
 	define('ADMIN_FROM', $config['admin_from']);
-	
+
+	// set default timezone
+	$timezone = trim(Pico_Setting('default_timezome'));
+	if (strlen($timezone) == 0) { $timezone = 'America/New_York'; }
+	@date_default_timezone_set($timezone);
 
 	if (defined('CURRENT_PAGE'))
 	{
@@ -81,7 +85,7 @@ else
 			}
 		}
 
-		$reserved_page_names = array('logout');
+		$reserved_page_names = array('logout', 'login');
 		
 		if (isset($params[0]))
 		{
@@ -97,13 +101,44 @@ else
 			}
 			else
 			{
-				// show home page
-				$default_id    = $db->result('SELECT `page_id` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
-				$default_alias = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
-				if ($default_id != FALSE)
+				if (strlen($ca) == 0)
 				{
-					define('CURRENT_PAGE', $default_id);
-					define('CURRENT_ALIAS', $default_alias);
+					// show home page
+					$default_id    = $db->result('SELECT `page_id` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
+					$default_alias = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `is_default`=1');
+					if ($default_id != FALSE)
+					{
+						define('CURRENT_PAGE', $default_id);
+						define('CURRENT_ALIAS', $default_alias);
+					}
+				}
+				else
+				{
+					// this is in case core gets included
+					$request = trim($_SERVER['REQUEST_URI'], '/');
+					list($path, $foo) = explode('?', $request);
+
+					if ((!is_file($path)) and (!in_array($path, $reserved_page_names)))
+					{
+						$_404_page = Pico_Setting('404_page_id');
+
+						if (is_numeric($_404_page))
+						{
+							$_404_alias = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $_404_page);
+						}
+						
+						if ((!is_numeric($_404_page)) or (!is_string($_404_alias)))
+						{
+							// default headers
+							header('HTTP/1.0 404 Not Found');
+						    echo "<h1>404 Not Found</h1>";
+						    echo "The page that you have requested could not be found.";
+						    exit();
+						}
+
+						header('Location: ' . $config['domain_path'] . $_404_alias);
+						exit();
+					}
 				}
 			}
 			define('PRINTER_FRIENDLY', $bool);
@@ -150,52 +185,6 @@ if ($params[0] == 'login')
 }
 else
 {
-	/*
-	if (isset($_COOKIE['keep_session']))
-	{
-		//echo 'still in there!';
-		$session_data = unserialize(base64_decode($_COOKIE['keep_session']));
-		if (!is_array($session_data))
-		{
-			exit();
-		}
-		$user_data = $db->assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `session_id`=? AND `last_ip`=?', $session_data['session_id'], $session_data['ip_address']);
-		if ($user_data != false)
-		{
-			$user_ip = getenv('REMOTE_ADDR');
-			if ($session_data['ip_address'] != $user_ip)
-			{
-				// user is coming in from same computer diff IP please update info
-				$db->run('UPDATE `'.DB_USER_TABLE.'` SET `last_login`=?, `last_ip`=? WHERE `id`=?', time(), $user_ip, $user_data['id']);
-			
-				// establish cookie
-				$domain = CookieDomain();
-				
-				$session_data = array(
-					'ip_address' => $user_ip,
-					'session_id' => $session_data['session_id'],
-				);
-				
-				$sd = base64_encode(serialize($session_data));
-				$good = setcookie('keep_session', $sd, time()+1209600, '/', $domain);
-			}
-			session_id($user_data['session_id']);
-			define('USER_ACCESS', $user_data['access']);
-			define('USER_ID', $user_data['id']);
-		}
-		else
-		{
-			// destroy cookie
-			$domain = CookieDomain();
-			setcookie('keep_session', '', time() - 3600, '/', $domain);
-			define('USER_ACCESS', 0);
-		}
-	}
-	else
-	{
-		define('USER_ACCESS', 0);
-	}*/
-
 	$pico_user_id = Pico_VerifySession();
 	if ($pico_user_id == 0)
 	{

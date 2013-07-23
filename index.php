@@ -7,7 +7,7 @@ if (CURRENT_ALIAS == 'logout')
 {
 	include('includes/logout.php');
 }
-elseif ($params[0] == 'cleanup')
+elseif (CURRENT_ALIAS == 'cleanup')
 {
 	include('includes/cleanup.php');
 }

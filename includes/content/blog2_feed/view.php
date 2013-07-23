@@ -58,9 +58,11 @@ if (strlen($settings['title']) > 0) {
 	echo '<div class="main_title"><a href="'.$link.'">'.$settings['title'].'</a></div>';
 }
 
+$shown = 0;
+
 if ( (is_array($entries)) and (sizeof($entries) > 0) )
 {
-	$shown = 0;
+	
 	foreach ($entries as $e)
 	{
 		//echo '<pre>'.print_r(, true).'</pre>';
@@ -98,4 +100,7 @@ if ( (is_array($entries)) and (sizeof($entries) > 0) )
 	}
 }
 
+if ($shown == 0) {
+	echo '<p class="no_posts">'.$settings['no_post'].'</p>';
+}
 ?>

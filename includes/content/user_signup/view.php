@@ -98,6 +98,9 @@ if (is_array($groups))
 
 if (sizeof($show_groups) > 0)
 {
+
+	echo $settings['intro_text'];
+
 	echo '<form method="post" action="'.$body->url(CURRENT_ALIAS . '/register').'">';
 	echo '<input type="hidden" name="component_id" value="'.$component_id.'" />';
 	echo '<input type="hidden" name="page_action" value="user_register" />';
@@ -108,10 +111,15 @@ if (sizeof($show_groups) > 0)
 		$payment_configs = $db->force_multi_assoc('SELECT * FROM `'.$group_payment_settings.'` WHERE `component_id`=? AND `group_id`=? AND `display`=? ORDER BY `duration` ASC',
 			$component_id, $group['id'], 1
 		);
+
+		$num_payment_options = sizeof($payment_configs);
 		
-		if (sizeof($payment_configs) > 0)
+		if ($num_payment_options > 0)
 		{
-			echo '<div class="group_title">'.$group['name'].'</div>';
+			if ($num_payment_options > 1)
+			{
+				echo '<div class="group_title">'.$group['name'].'</div>';
+			}
 			
 			foreach ($payment_configs as $config)
 			{
@@ -151,24 +159,33 @@ if (sizeof($show_groups) > 0)
 						$duration_text .= $num_years . ' days';
 					}
 				}
+
+				if ($num_payment_options == 1)
+				{
+					echo '<input type="hidden" name="register_option" value="'.$config['entry_id'].'" />';
+				}
+				else
+				{
+					echo '<div class="user_signup_option">
+						<div class="uso_left">
+						<input type="radio" name="register_option" value="'.$config['entry_id'].'" />
+						</div>
+						<div class="uso_right">
+							<div class="description">'.$config['description'].'</div>
+							<div class="cost">'.$cost.$duration_text.'</div>
+						</div>
+						<div class="clear"></div>
+					</div>';
+				}
 				
 				//$link = $body->url(CURRENT_ALIAS . '/register/'.$config['entry_id']);
 				
-				echo '<div class="user_signup_option">
-					<div class="uso_left">
-					<input type="radio" name="register_option" value="'.$config['entry_id'].'" />
-					</div>
-					<div class="uso_right">
-						<div class="description">'.$config['description'].'</div>
-						<div class="cost">'.$cost.$duration_text.'</div>
-					</div>
-					<div class="clear"></div>
-				</div>';
+				
 			}
 		}
 	}
 	
-	echo '<input type="submit" value="Continue" />';
+	echo '<input type="submit" value="Get Started" class="submit" />';
 	echo '</form>';
 }
 ?>

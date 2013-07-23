@@ -50,7 +50,7 @@ if (sizeof($options['lists']) > 1)
 		echo '
 		<div class="newsletter_choice">
 		<table border="0" cellpadding="0" cellspacing="0">
-		<tr><td><input type="checkbox" name="selected_lists['.$x.']" value="1" /></td><td>'.$listnames[$x].'</td></tr>
+		<tr><td><input type="checkbox" name="selected_lists['.$x.']" value="1" checked="checked" /></td><td>'.$listnames[$x].'</td></tr>
 		</table>
 		</div>';
 	}
@@ -64,46 +64,42 @@ $email_box_text = $options['email_box_text'];
 $name_box_text  = $options['name_box_text'];
 
 if ($options['layout'] == 'full') {
-require_once('includes/captcha.class.php');
-$captcha = new Captcha('component_' . $component_id, $db, getenv('REMOTE_ADDR'));
-$captcha_img = '<img src="'.$body->url($captcha->Image()).'" />';
-?>
-<tr><td>First Name</td><td><input type="text" name="first_name" /></td></tr>
-<tr><td>Last Name</td><td><input type="text" name="last_name" /></td></tr>
-<tr><td>E-mail Address</td><td><input type="text" name="email" /></td></tr>
-<tr><td>Verify</td><td><?=$captcha_img?><br /><input type="text" name="verify" /></td></tr>
-</table>
-<?php
-echo $signup_button;
+	include('includes/content/external_newsletter/layout_normal.php');
 } 
 elseif ($options['layout'] == 'short_name') 
 {
-
-?>
-<tr>
-	<td class="signup_text"><?=$signup_text?></td>
-	<td class="email_box">
-		<input type="text" class="text" name="email" dummytext="<?=$email_box_text?>" /><br />
-		<input type="text" class="text" name="first_name" dummytext="<?=$name_box_text?>" />
-	</td>
-	<td><?=$signup_button?></td>
-</tr>
-</table>
-<?php
+	include('includes/content/external_newsletter/layout_short_name.php');
+}
+elseif ($options['layout'] == 'short_name_flip') 
+{
+	include('includes/content/external_newsletter/layout_short_name2.php');
+}
+elseif ($options['layout'] == 'short_with_labels')
+{
+	include('includes/content/external_newsletter/layout_short_labels.php');
 }
 else 
 {
-
-
-?>
-<tr>
-	<td class="signup_text"><?=$signup_text?></td>
-	<td class="signup_email"><input type="text" class="text" name="email" dummytext="<?=$email_box_text?>" /></td>
-	<td class="signup_button"><?=$signup_button?></td>
-</tr>
-</table>
-<?php
+	include('includes/content/external_newsletter/layout_short.php');
 }
 ?>
 
 </form>
+<div id="en_splash_bg">
+	<div id="en_splash">
+		<div class="en_close" onclick="EN_ClosePopup()"></div>
+		<table class="en_content">
+			<tr>
+				<td id="en_splash_content"></td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<script type="text/javascript">
+document.observe("dom:loaded", function() {
+	EN_CenterWindow('en_splash');
+	var func = function() { EN_CenterWindow('en_splash'); }
+	add_resize_event(func);
+});
+</script>

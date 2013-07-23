@@ -466,6 +466,17 @@ function Pico_AddUser(user_id)
 	Pico_DisplayAP(url('includes/ap_users.php'+extra), title, 500, 500, func);
 }
 
+function Pico_ActivateUser(user_id)
+{
+	if (confirm('Are you sure you want to activate this user?'))
+	{
+		var target_url = url('includes/ap_actions.php?ap_action=activate_user&user_id='+user_id);
+		new Ajax.Request(target_url, { onComplete: function() {
+			Pico_ManageUsers();
+		} } );
+	}
+}
+
 function Pico_LoadUserGroupProfile(user_id, group_id)
 {
 	user_id  = (user_id == null) ? 0 : user_id;
@@ -567,12 +578,14 @@ function Pico_AddPage()
 
 function Pico_Update()
 {
-	Pico_DisplayAP(url('includes/ap_update.php'), 'Update Pico', 500, 300);
+	var func = function() {
+		Pico_CheckForUpdates();
+	}
+	Pico_DisplayAP(url('includes/ap_update.php'), 'Update Pico', 600, 405, func);
 }
 
-function Pico_CheckForUpdates(button)
+function Pico_CheckForUpdates()
 {
-	button.disabled = true;
 	document.getElementById('update_status').innerHTML = 'Checking for updates...';
 	var target_url = url('includes/update_check.php');
 	new Ajax.Updater('update_status', target_url, { onComplete: function() {

@@ -56,6 +56,6 @@ elseif ($section == 'login')
 <div class="setting_icon" onclick="Pico_SettingsSection('ftp')">FTP</div>
 <div class="setting_icon" onclick="Pico_SettingsSection('seo')">SEO/Analytics</div>
 <div class="clear"></div>
-<div class="setting_icon" onclick="Pico_SettingsSection('login')">Login Page</div>
+<div class="setting_icon" onclick="Pico_SettingsSection('login')">Page Settings</div>
 <div class="setting_icon" onclick="Pico_SettingsSection('social')">Social Media</div>
 <div class="setting_icon" onclick="Pico_PaymentSettings()">Payments</div>

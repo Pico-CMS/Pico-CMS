@@ -95,7 +95,7 @@ else
 			<td><input type="text" name="cost" value="<?=$info['cost']?>" /></td>
 		</tr>
 		</table>
-		<input type="submit" value="<?=$button?>" />
+		<input type="submit" value="<?=$button?>" class="submit" />
 	</form>
 	
 	<p class="click" onclick="US_ReloadMain(<?=$component_id?>)">[Back]</p>

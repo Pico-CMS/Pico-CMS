@@ -1,0 +1,48 @@
+
+#en_splash_bg
+{
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: url([URL]includes/content/external_newsletter/black75.png);
+	z-index: 3;
+	display: none;
+}
+
+#en_splash
+{
+	width: 500px;
+	height: 290px;
+	background: #f4f3e7;
+	padding: 45px 50px;
+	position: absolute;
+}
+
+.en_close
+{
+	width: 14px;
+	height: 15px;
+	cursor: pointer;
+	position: absolute;
+	top: 24px;
+	right: 26px;
+	background: url([URL]includes/content/external_newsletter/close.png) center no-repeat;
+}
+
+table.en_content
+{
+	border-collapse: collapse;
+	border: 0;
+}
+
+table.en_content td
+{
+	padding: 0;
+	border: 0;
+	width: 500px;
+	height: 290px;
+	vertical-align: middle;
+}
+

@@ -38,9 +38,11 @@ if (!is_array($lists)) { $lists = array(); }
 		<td>Layout</td>
 		<td colspan="2">
 			<select name="options[layout]">
-				<option <?=($options['layout'] == 'full') ? 'selected="selected"' : ''?> value="full">Full</option>
-				<option <?=($options['layout'] == 'short') ? 'selected="selected"' : ''?> value="short">Short</option>
-				<option <?=($options['layout'] == 'short_name') ? 'selected="selected"' : ''?> value="short_name">Short with name</option>
+				<option <?=($options['layout'] == 'full') ? 'selected="selected"' : ''?> value="full">Full (w/ captcha)</option>
+				<option <?=($options['layout'] == 'short') ? 'selected="selected"' : ''?> value="short">Email Only</option>
+				<option <?=($options['layout'] == 'short_name') ? 'selected="selected"' : ''?> value="short_name">Email then Name</option>
+				<option <?=($options['layout'] == 'short_name_flip') ? 'selected="selected"' : ''?> value="short_name_flip">Name then Email</option>
+				<option <?=($options['layout'] == 'short_with_labels') ? 'selected="selected"' : ''?> value="short_with_labels">Name then Email (External Labels)</option>
 			</select>
 		</td>
 	</tr>
@@ -51,9 +53,9 @@ if (!is_array($lists)) { $lists = array(); }
 		</td>
 	</tr>
 	<tr class="a">
-		<td>Signup Complete Text</td>
-		<td colspan="2">
-			<input type="text" name="options[signup_complete_text]" value="<?=$options['signup_complete_text']?>" />
+		<td colspan="3"><div style="margin: 5px 0 0">Signup Complete Text</div><br />
+			<textarea id="ck_signup_complete_text"><?=$options['signup_complete_text']?></textarea>
+			<input type="hidden" name="options[signup_complete_text]" id="signup_complete_text" value="" />
 		</td>
 	</tr>
 	<tr class="b">

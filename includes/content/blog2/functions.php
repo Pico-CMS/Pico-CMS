@@ -565,6 +565,9 @@ function Blog2_ShowRssFeed($component_id, $blog_title)
 			
 			$story = Blog2_StripTags($story);
 			$story = htmlspecialchars($story);
+
+
+			$pub_date  = date('r', $pub_ts);
 			
 			$items .= <<<RSS
 		<item>
@@ -572,6 +575,7 @@ function Blog2_ShowRssFeed($component_id, $blog_title)
 			<link>$link</link>
 			<description>$story</description>
 			<guid>$link</guid>
+			<pubDate>$pub_date</pubDate>
 		</item>
 
 RSS;
@@ -591,7 +595,6 @@ RSS;
 		<title>$blog_title</title>
 		<link>$blog_url</link>
 		<description>Website blog for $site_name</description>
-		<pubDate>$pub_date</pubDate>
 $items
 	</channel>
 </rss> 

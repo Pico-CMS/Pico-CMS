@@ -108,7 +108,7 @@ Class CFLayout
 				$field .= '</table>';
 				break;
 			case 'file': 
-				$field = '<input type="file" name="fields['.$counter.']" />';
+				$field = '<input type="hidden" name="fields['.$counter.']" value="" /><input type="file" name="fields['.$counter.']" />';
 				break;
 			case 'terms':
 				$_caption = ''; // handle our own captcha

@@ -631,7 +631,7 @@ function Pico_ConnectFTP()
 	return $ftp;
 }
 
-function CheckWritable($path)
+function CheckWritable($path, $bool = false)
 {
 	if (!is_writable($path))
 	{
@@ -650,6 +650,7 @@ function CheckWritable($path)
 		}
 		else
 		{
+			if ($bool) { return FALSE; }
 			echo '<p class="error">Error: '.$path.' is not writable, please check your FTP settings</p>';
 			echo '<pre>'.print_r($ftp, TRUE).'</pre>';
 		}
@@ -1227,14 +1228,17 @@ function Pico_SubmitAuthnetPayment($total, $cc_num, $cc_month, $cc_year, $cc_ccv
 	}*/
 }
 
-function Pico_QueryUpdateServer($post_data)
+function Pico_QueryUpdateServer($post_data = array())
 {
+	$post_data['build_version'] = Pico_Setting('pico_build_version');
+	$post_data_str = http_build_query($post_data);
+
 	$post_url = 'http://update-server.pico-cms.net/remote_update.php';
 	$ch       = curl_init(); // initialize curl handle
     curl_setopt($ch, CURLOPT_URL,$post_url); // set url to post to
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER,1); // return into a variable
 	curl_setopt($ch, CURLOPT_POST, 1); // set POST method
-	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data); // add POST fields
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $post_data_str); // add POST fields
 	$output = curl_exec($ch); // run the whole process
     curl_close($ch); 
 	
@@ -1746,5 +1750,68 @@ HTML;
 
 	return $form;
 }
+
+function Pico_SendAccountWelcomeEmail($user_id)
+{
+	global $db;
+	$user_info = $db->assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `id`=?', $user_id);
+	if (!is_array($user_info)) { return; }
+
+	// get component id that signed him up
+	$additional_data = unserialize($user_info['additional_data']);
+	if (!is_array($additional_data)) { return; }
+
+	$signup_component_id = $additional_data['signup_component_id'];
+	if (!is_numeric($signup_component_id)) { return; }
+
+	// get component settings
+
+	$additional_info    = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $signup_component_id);
+	$component_settings = unserialize($additional_info);
+	if (!is_array($settings)) { $settings = array(); }
+
+	if (isset($component_settings['approval_email_subject'])) 
+	{
+		$subject = $component_settings['approval_email_subject'];
+		$message = $component_settings['approval_email_message'];
+
+		$message = str_replace('FIRST_NAME', $user_info['first_name'], $message);
+		$message = str_replace('FIRST_NAME', $user_info['first_name'], $message);
+
+		Pico_SendUserEmail($user_info['email_address'], $subject, $message);
+	}
+}
+
+function Pico_SendAccountDeclinedEmail($user_id)
+{
+	global $db;
+	$user_info = $db->assoc('SELECT * FROM `'.DB_USER_TABLE.'` WHERE `id`=?', $user_id);
+	if (!is_array($user_info)) { return; }
+
+	// get component id that signed him up
+	$additional_data = unserialize($user_info['additional_data']);
+	if (!is_array($additional_data)) { return; }
+
+	$signup_component_id = $additional_data['signup_component_id'];
+	if (!is_numeric($signup_component_id)) { return; }
+
+	// get component settings
+
+	$additional_info    = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $signup_component_id);
+	$component_settings = unserialize($additional_info);
+	if (!is_array($settings)) { $settings = array(); }
+
+	if (isset($component_settings['delete_email_subject'])) 
+	{
+		$subject = $component_settings['delete_email_subject'];
+		$message = $component_settings['delete_email_message'];
+
+		$message = str_replace('FIRST_NAME', $user_info['first_name'], $message);
+		$message = str_replace('FIRST_NAME', $user_info['first_name'], $message);
+
+		Pico_SendUserEmail($user_info['email_address'], $subject, $message);
+	}
+}
+
 
 ?>

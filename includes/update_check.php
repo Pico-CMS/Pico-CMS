@@ -27,20 +27,10 @@ $component_output = '';
 // query update server to see if there is a new version
 
 // for pico core files
-$build_version = Pico_Setting('pico_build_version');
-if (!is_numeric($build_version))
-{
-	// TODO: Take this out and make it part of the install process
-	$build_version = 1017;
-	Pico_Setting('pico_build_version', $build_version);
-}
 
-$values = array();
-array_push($values, "update_action=get_latest_build_version");
-array_push($values, "build_version=$build_version");
-$curl_post_line = implode('&', $values);
-
-$output = Pico_QueryUpdateServer($curl_post_line);
+$post = array();
+$post['update_action'] = 'get_latest_build_version';
+$output = Pico_QueryUpdateServer($post);
 
 $xml = simplexml_load_string($output);
 $has_update = FALSE;
@@ -85,6 +75,16 @@ else
 		}
 		
 		$build_version = (string) $xml->latest_build_version;
+
+		$change_log = '';
+		foreach ($xml->logs->log as $log)
+		{
+			$note = (string) $log->note;
+			$date = (string) $log->date;
+			$build = (string) $log->build;
+			
+			$change_log .= '<div><span class="bold">Build '.$build.'</span> ('.date('m/d/y', $date).'): '.nl2br(trim($note)).'</div>';
+		}
 		
 		if (sizeof($bad_files) > 0)
 		{
@@ -99,11 +99,14 @@ else
 	<div class="name"><span class="bold">Update unavailable for Pico Core Files</span></div>
 	<div class="version"><span class="bold">New Version:</span> $build_version</div>
 	<div class="info">
-		An update was found but one or more files could not be verified as compatible for updating. 
-		Too see a list of files that are conflicting with this update <span class="click" onclick="Pico_ShowBadFiles(0)">click here</span>
+		<p>An update was found but one or more files could not be verified as compatible for updating. 
+		Too see a list of files that are conflicting with this update <span class="click" onclick="Pico_ShowBadFiles(0)">click here</span></p>
 		<div class="bad_files" id="bad_files_0" style="display: none">
 			$bfo
 		</div>
+		<p class="changelog">
+			$change_log
+		</p>
 		<table border="0" cellpadding="0" cellspacing="0">
 		<tr><td><input type="checkbox" name="update[]" value="0" /> </td><td>Force Update (NOT recommended)</td></tr>
 		</table>
@@ -113,23 +116,15 @@ HTML;
 		}
 		else
 		{
-			$change_log = '';
-			foreach ($xml->logs->log as $log)
-			{
-				$note = (string) $log->note;
-				$date = (string) $log->date;
-				$build = (string) $log->build;
-				
-				$change_log .= '<div><span class="bold">Build '.$build.'</span> ('.date('m/d/y', $date).'): '.nl2br(trim($note)).'</div>';
-			}
+			
 			
 			$component_output .= <<<HTML
 <div class="can_update">
 	<div class="name"><span class="bold">Update available for Pico Core Files</span></div>
 	<div class="version"><span class="bold">New Build Version:</span> $build_version </div>
-	<div class="changelog">
+	<p class="changelog">
 		$change_log
-	</div>
+	</p>
 	<table border="0" cellpadding="0" cellspacing="0">
 	<tr><td><input type="checkbox" name="update[]" value="0" /> </td><td>Include in Update</td></tr>
 	</table>
@@ -142,19 +137,20 @@ HTML;
 // for components
 if (sizeof($components_to_check) > 0)
 {
-	$values = array();
+	$post = array();
 	$components_to_update = array();
+
+	$post['update_action'] = 'get_versions';
+	$post['components'] = array();
 	
-	array_push($values, "update_action=get_versions");
 	foreach ($components_to_check as $path)
 	{
-		$parts = explode('/', $path);
+		$parts  = explode('/', $path);
 		$folder = $parts[2];
-		array_push($values, "components[]=$folder");
+		$post['components'][] = $folder;
 	}
 	
-	$curl_post_line = implode('&', $values);
-	$output = Pico_QueryUpdateServer($curl_post_line);
+	$output = Pico_QueryUpdateServer($post);
 	
 	$xml = simplexml_load_string($output);
 	if ($xml == FALSE)
@@ -196,13 +192,12 @@ if (sizeof($components_to_check) > 0)
 		$has_update = TRUE;
 		foreach ($components_to_update as $component)
 		{
-			$values = array();
-			$values[] = "update_action=get_md5_list";
-			$values[] = "component_id=" . $component['id'];
-			$values[] = "from_version=" . $component['old_version'];
-			$curl_post_line = implode('&', $values);
+			$post = array();
+			$post['update_action'] = 'get_md5_list';
+			$post['component_id'] = $component['id'];
+			$post['from_version'] = $component['old_version'];
 			
-			$output = Pico_QueryUpdateServer($curl_post_line);
+			$output = Pico_QueryUpdateServer($post);
 			
 			// if everything matches, ask the user if he wants to update
 			$xml = simplexml_load_string($output);
@@ -235,29 +230,30 @@ if (sizeof($components_to_check) > 0)
 					}
 				}
 			}
+
+			$log = '';
+			foreach ($xml->changelog->log as $_log)
+			{
+				$date    = (string) $_log->date;
+				$version = (string) $_log->version;
+				$note    = (string) $_log->note;
+				
+				$date = date('m/d/y', $date);
+				$log .= '<div class="entry">'.$date.' (version '.$version.'): '.nl2br(trim($note)).'</div>';
+			}
+
+			$id = $component['id'];
 			
 			if ($can_update == TRUE)
 			{
-				$log = '';
-				foreach ($xml->changelog->log as $log)
-				{
-					$date    = (string) $log->date;
-					$version = (string) $log->version;
-					$note    = (string) $log->note;
-					
-					$date = date('m/d/y', $date);
-					$log .= '<div class="entry">'.$date.' (version '.$version.'): '.nl2br($note).'</div>';
-				}
 				
-				$id = $component['id'];
-			
 				$component_output .= <<<HTML
 <div class="can_update">
 	<div class="name"><span class="bold">Update available for:</span> $component[name]</div>
 	<div class="version"><span class="bold">New Version:</span> $component[new_version]</div>
-	<div class="changelog">
+	<p class="changelog">
 		$log
-	</div>
+	</p>
 	<table border="0" cellpadding="0" cellspacing="0">
 	<tr><td><input type="checkbox" name="update[]" value="$id" /> </td><td>Include in Update</td></tr>
 	</table>
@@ -276,11 +272,17 @@ HTML;
 	<div class="name"><span class="bold">Update unavailable for:</span> $component[name]</div>
 	<div class="version"><span class="bold">New Version:</span> $component[new_version]</div>
 	<div class="info">
-		An update was found but one or more files could not be verified as compatible for updating. 
-		Too see a list of files that are conflicting with this update <span class="click" onclick="Pico_ShowBadFiles($component[id])">click here</span>
+		<p>An update was found but one or more files could not be verified as compatible for updating. 
+		Too see a list of files that are conflicting with this update <span class="click" onclick="Pico_ShowBadFiles($component[id])">click here</span></p>
 		<div class="bad_files" id="bad_files_$component[id]" style="display: none">
 			$bfo
 		</div>
+		<p class="changelog">
+			$log
+		</p>
+		<table border="0" cellpadding="0" cellspacing="0">
+		<tr><td><input type="checkbox" name="update[]" value="$id" /> </td><td>Force Update (NOT recommended)</td></tr>
+		</table>
 	</div>
 </div>
 HTML;

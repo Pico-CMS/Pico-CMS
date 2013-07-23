@@ -93,11 +93,12 @@ if ( (!is_array($twitter_info)) or ((time() - $twitter_info['last_updated']) > 3
 	$counter = 0;
 	if (sizeof($response) > 0)
 	{
+		$ops = array('target'=>'_blank');
 		foreach ($response as $tweet)
 		{
 			//$t = (array) $t;
 			$tweet = object_to_array($tweet);
-			$tweet = tmhUtilities::entify_with_options($tweet);
+			$tweet = tmhUtilities::entify_with_options($tweet, $ops);
 			$tweets[] = $tweet;
 			$counter++;
 			if ($counter >= $settings['t_num'])

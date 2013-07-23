@@ -157,9 +157,12 @@ if (($_POST['page_action'] == 'register') and ($_POST['register_option'] == $reg
 		{
 			// make user
 			$email_address = strtolower($email_address);
+			$additional_data = array();
+			$additional_data['signup_component_id'] = $component_id;
 			
-			$user_id = $db->insert('INSERT INTO `'.DB_USER_TABLE.'` (`username`, `password`, `access`, `email_address`, `first_name`, `last_name`, `user_active`) VALUES (?,?,?,?,?,?,?)',
-				$email_address, md5($password), 1, $email_address, $first_name, $last_name, 0
+			$user_id = $db->insert('INSERT INTO `'.DB_USER_TABLE.'` (`username`, `password`, `access`, `email_address`, `first_name`, 
+				`last_name`, `user_active`, `additional_data`) VALUES (?,?,?,?,?,?,?,?)',
+				$email_address, md5($password), 1, $email_address, $first_name, $last_name, 0, serialize($additional_data)
 			);
 			
 			$user_additional_table = DB_PREFIX . 'user_profile_values_' . $profile_id;
@@ -228,15 +231,15 @@ $output = '
 <table class="user_register" border="0" cellpadding="0" cellspacing="0">
 <tr>
 	<td class="left">First Name *</td>
-	<td class="right"><input type="text" name="first_name" value="'.$first_name.'" /></td>
+	<td class="right"><input type="text" name="first_name" value="'.$first_name.'" class="text"/></td>
 </tr>
 <tr>
 	<td class="left">Last Name *</td>
-	<td class="right"><input type="text" name="last_name" value="'.$last_name.'" /></td>
+	<td class="right"><input type="text" name="last_name" value="'.$last_name.'" class="text" /></td>
 </tr>
 <tr>
 	<td class="left">E-mail Address *</td>
-	<td class="right"><input type="text" name="email_address" value="'.$email_address.'" /></td>
+	<td class="right"><input type="text" name="email_address" value="'.$email_address.'" class="text" /></td>
 </tr>
 <tr>
 	<td class="left">Choose a password *</td>
@@ -284,11 +287,11 @@ $output .= '
 	<td class="right">
 		'.$captcha_img.'
 		<div class="caption">Please type the image above into the box below.</div>
-		<input type="text" name="captcha_verify" maxlength="5" />
+		<input type="text" name="captcha_verify" maxlength="5" class="text captcha" />
 	</td>
 </tr>
 </table>
-<input type="submit" value="Continue" />
+<input type="submit" value="Continue" class="submit" />
 </form>';
 
 echo $output;

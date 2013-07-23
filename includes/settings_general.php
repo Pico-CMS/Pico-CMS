@@ -21,6 +21,12 @@ if ( (!defined('USER_ACCESS')) or (USER_ACCESS < 3) ) { exit(); }
 			<textarea class="ap_textarea_lg" name="settings[html_body]"><?=htmlspecialchars(Pico_Setting('html_body'))?></textarea>
 		</td>
 	</tr>
+	<tr class="a">
+		<td>Timezone</td>
+		<td><input type="text" name="settings[default_timezome]" value="<?=Pico_Setting('default_timezome')?>" /><br />
+			Default is: America/New_York. <a href="http://us2.php.net/manual/en/timezones" target="_blank">More</a>
+		</td>
+	</tr>
 	</table>
 	
 	<input type="submit" name="submit_btn" value="Save" />

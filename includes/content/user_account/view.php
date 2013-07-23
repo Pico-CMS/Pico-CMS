@@ -29,17 +29,24 @@ elseif ($params[1] == 'transaction-history')
 else
 {
 	$output = $settings['welcome-back'];
-	
-	
 	$output = str_replace('FIRST_NAME', $user_info['first_name'], $output);
 	$output = str_replace('LAST_NAME', $user_info['last_name'], $output);
 	$output = str_replace('EMAIL', $user_info['email_address'], $output);
 	
 	echo nl2br($output);
+
+	if ($settings['settings-only'] == 1)
+	{
+		include('includes/content/user_account/account_settings.php');
+	}
+	else
+	{
+		echo '<ul class="my_account_menu">
+		<li><a href="'.$body->url(CURRENT_ALIAS . '/transaction-history').'">Transaction History</a></li>
+		<li><a href="'.$body->url(CURRENT_ALIAS . '/account-settings').'">Account Settings</a></li>
+		</ul>';
+	}
 	
-	echo '<ul class="my_account_menu">
-	<li><a href="'.$body->url(CURRENT_ALIAS . '/transaction-history').'">Transaction History</a></li>
-	<li><a href="'.$body->url(CURRENT_ALIAS . '/account-settings').'">Account Settings</a></li>
-	</ul>';
+	
 }
 ?>

@@ -35,35 +35,14 @@ function ResetPerms($ftp, $perms)
 	}
 }
 
-function get_php_files($dir, &$files)
-{
-	if ($dh = opendir($dir)) 
-	{
-		while (($file = readdir($dh)) !== false)
-		{
-			if ( ($file != '.') and ($file != '..') )
-			{
-				$full_path = $dir . $file;
-				$extension = strtolower(array_pop(explode('.', $file)));
-				
-				if (is_dir($full_path))
-				{
-					$full_path .= '/';
-					get_php_files($full_path, $files);
-				}
-				elseif ($extension == 'php')
-				{
-					$files[] = $full_path;
-				}
-			}
-		}
-		closedir($dh);
-	}
-}
-
 // try to establish an FTP connection to use as needed
 $ftp = Pico_ConnectFTP();
 $ftp_connected = (is_object($ftp)) ? TRUE : FALSE;
+
+if (!$ftp_connected)
+{
+	exit('Unable to connect to FTP');
+}
 
 foreach ($_POST['update'] as $component_id)
 {
@@ -75,17 +54,26 @@ foreach ($_POST['update'] as $component_id)
 	else
 	{
 		// query the pico update server for files for this component
-		$values = array();
-		$values[] = "update_action=get_component";
-		$values[] = "component_id=" . $component_id;
-		$curl_post_line = implode('&', $values);
+
 		
-		$output = Pico_QueryUpdateServer($curl_post_line);
+
+		$post = array();
+		$post['update_action'] = 'get_component';
+		$post['component_id'] = $component_id;
+
+		$output = Pico_QueryUpdateServer($post);
 		
 		$xml              = simplexml_load_string($output);
 		$component_folder = (string) $xml->component_folder;
 		$new_version      = (string) $xml->version;
 		$base_path        = 'includes/content/'.$component_folder.'/';
+
+		$post = array();
+		$post['update_action']     = 'get_component';
+		$post['component_id']      = $component_id;
+		$post['component_version'] = trim(file_get_contents($base_path . 'version.txt'));
+
+		$old_version_info = simplexml_load_string(Pico_QueryUpdateServer($post));
 
 		// go thru each file returned
 		$original_perms = array(); // use this variable to reset permissions of whatever folders/files we are manipulating back to what they were when done
@@ -93,6 +81,8 @@ foreach ($_POST['update'] as $component_id)
 		// we will use these variables to perform our various update actions
 		$dirs    = array(); // parent directories of all files and sub folders in this component
 		$entries = array();
+
+		$new_component_files = array();
 		
 		//print_r($xml);
 		
@@ -102,6 +92,8 @@ foreach ($_POST['update'] as $component_id)
 			$type    = (string) $file->type;
 			$perms   = (string) $file->perms;
 			$content = (string) $file->contents;
+
+			$new_component_files[] = $name;
 			
 			$content = ($type == 'file') ? base64_decode($content) : $content;
 			
@@ -128,25 +120,21 @@ foreach ($_POST['update'] as $component_id)
 		// put version file in here just to be safe
 		
 		$entries[] = array(
-				'name'    => 'version.txt',
-				'type'    => 'file',
-				'perms'   => file_perms($base_path . 'version.txt'),
-				'content' => $new_version,
-			);
-		
+			'name'    => 'version.txt',
+			'type'    => 'file',
+			'perms'   => file_perms($base_path . 'version.txt'),
+			'content' => $new_version,
+		);
 		
 		// we should now have an array of parent directors in $dirs
 		// first, make sure base component folder is writable
 		if (!is_writable($base_path))
 		{
-			if ($ftp_connected)
-			{
-				//$perms = substr(sprintf('%o', fileperms($base_path)), -4); // ftp style perms.. ie 0644
-				$perms = file_perms($base_path);
-				
-				$original_perms[$base_path] = $perms; // reset for later
-				@$ftp->chmod($base_path, 0777);
-			}
+			//$perms = substr(sprintf('%o', fileperms($base_path)), -4); // ftp style perms.. ie 0644
+			$perms = file_perms($base_path);
+			
+			$original_perms[$base_path] = $perms; // reset for later
+			@$ftp->chmod($base_path, 0777);
 		}
 		
 		if (!is_writable($base_path))
@@ -169,7 +157,7 @@ foreach ($_POST['update'] as $component_id)
 				if (!file_exists($current_dir))
 				{
 					// get parent perms
-					if ( (!is_writable($parent)) and ($ftp_connected) )
+					if (!is_writable($parent))
 					{
 						$perms = file_perms($parent);
 						$original_perms[$parent] = $perms; // reset for later
@@ -184,7 +172,7 @@ foreach ($_POST['update'] as $component_id)
 				}
 				else
 				{
-					if ( (!is_writable($current_dir)) and ($ftp_connected) )
+					if (!is_writable($current_dir))
 					{
 						$perms = file_perms($current_dir);
 						$original_perms[$current_dir] = $perms; // reset for later
@@ -208,7 +196,7 @@ foreach ($_POST['update'] as $component_id)
 				if (file_exists($full_path))
 				{
 				
-					if ( (!is_writable($full_path)) and ($ftp_connected) )
+					if (!is_writable($full_path))
 					{
 						$perms = file_perms($full_path);
 						$original_perms[$full_path] = $perms; // reset for later
@@ -243,35 +231,18 @@ foreach ($_POST['update'] as $component_id)
 			}
 		}
 		
-		// go thru all php files that exist in the directory, delete any that do not exist in the new update
-		
-		$files = array();
-		get_php_files($base_path, $files);
-		
-		foreach ($files as $file)
+		// because i'm dumb, we need to remove any file that was in the old version, that isn't in the new version
+
+		foreach ($old_version_info->files->file as $file)
 		{
-			$check_file = str_replace($base_path, '', $file);
-			if (!in_array($check_file, $new_file_list))
+			$name = (string) $file->name;
+
+			if (!in_array($name, $new_component_files))
 			{
-				$full_file = $base_path . $check_file;
-				
-				$parent_folder = dirname($full_file);
-				if ( (!is_writable($parent_folder)) and ($ftp_connected) )
+				if (file_exists($base_path . $name))
 				{
-					$perms = file_perms($parent_folder);
-					$original_perms[$parent_folder] = $perms; // reset for later
-					@$ftp->chmod($parent_folder, 0777);
-				}
-				
-				if ( (!is_writable($full_file)) and ($ftp_connected) )
-				{
-					@$ftp->chmod($full_file, 0666);
-				}
-				
-				if (is_writable($full_file))
-				{
-					//echo "$full_file";
-					unlink($full_file);
+					// delete it
+					@$ftp->deleteRecursive($base_path . $name);
 				}
 			}
 		}
@@ -302,15 +273,12 @@ function Pico_UpdateCoreFiles($ftp)
 {
 	$ftp_connected = (is_object($ftp)) ? TRUE : FALSE;
 	
-	$values = array();
-
-	$values[] = "update_action=get_latest_build";
-	$values[] = "build_version=" . Pico_Setting('pico_build_version');
+	$post = array();
+	$post['update_action'] = 'get_latest_build';
 	
-	$curl_post_line = implode('&', $values);
 	$original_perms = array();
 	
-	$output = Pico_QueryUpdateServer($curl_post_line);
+	$output = Pico_QueryUpdateServer($post);
 	$xml    = simplexml_load_string($output);
 	
 	$build_version = (string) $xml->latest_build_version;
@@ -345,13 +313,26 @@ function Pico_UpdateCoreFiles($ftp)
 					array_pop($parts);
 					$parent_folder = implode('/', $parts);
 				}
+
+				// folder should exist, if it doesn't, create it
+
 				
 				if (strlen($parent_folder) == 0)
 				{
 					$parent_folder = './';
 				}
+
+				if (!is_dir($parent_folder))
+				{
+					@$ftp->mkDirRecursive($parent_folder);
+				}
+
+				if (!is_dir($parent_folder))
+				{
+					exit('Parent folder does not exist: ' . $parent_folder);
+				}
 				
-				if ( (!is_writable($parent_folder)) and ($ftp_connected) )
+				if (!is_writable($parent_folder))
 				{
 					$perms = file_perms($parent_folder);
 					$original_perms[$parent_folder] = $perms; // reset for later
@@ -367,7 +348,7 @@ function Pico_UpdateCoreFiles($ftp)
 				if ( (($action == 'edit') or ($action == 'add')) and (is_file($filename)) )
 				{
 					// make sure FILE is writable
-					if ( (!is_writable($filename)) and ($ftp_connected) )
+					if (!is_writable($filename))
 					{
 						$perms = file_perms($filename);
 						$original_perms[$filename] = $perms; // reset for later
@@ -410,7 +391,7 @@ function Pico_UpdateCoreFiles($ftp)
 			{
 				if ($action == 'delete')
 				{
-					@unlink($filename);
+					@rmdir($filename);
 				}
 			}
 			

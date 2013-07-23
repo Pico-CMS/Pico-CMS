@@ -26,19 +26,27 @@ class Captcha
 		)");
 		
 		// prune, captcha's are good for 1 hour
-		$need_pruned = $db->force_multi_assoc('SELECT * `'.$captcha_table.'` WHERE `entry_time` < ?',  time() - 3600);
+		$need_pruned = $db->force_multi_assoc('SELECT * FROM `'.$captcha_table.'` WHERE `entry_time` < ?',  time() - 3600);
 		if (is_array($need_pruned))
 		{
+
 			foreach ($need_pruned as $info)
 			{
 				$filename = md5($info['instance_id'] . '_' . $info['ip_addr'] . '_' . $info['code']) . '.jpg';
-				if (is_file('includes/tmp/' . $filename))
+				$captcha_file = 'includes/tmp/' . $filename;
+				if (is_file($captcha_file))
 				{
-					unlink('includes/tmp/' . $filenane);
+					@unlink($captcha_file);
+				}
+
+				if (!is_file($captcha_file))
+				{
+					// remove from DB
+					$db->run('DELETE FROM `'.$captcha_table.'` WHERE `instance_id`=? AND `ip_addr`=? AND `code`=?',
+						$info['instance_id'], $info['ip_addr'], $info['code']
+					);	
 				}
 			}
-			// wipe db
-			$db->run('DELETE FROM `'.$captcha_table.'` WHERE `entry_time` < ?',  time() - 3600);
 		}
 		
 		$code = $db->result('SELECT `code` FROM `'.$captcha_table.'` WHERE `instance_id`=? AND `ip_addr`=?',
@@ -61,11 +69,13 @@ class Captcha
 			$font  = 'includes/captcha.ttf'; // Tells the script where our font is located and it's name.
 			$black = imagecolorallocate($image, 0,0,0); // Sets color to black 
 			
-			imagettftext($image, 20, -10, 5, 35, $black, $font, substr($code, 0, 1));
-			imagettftext($image, 20, 20, 35, 35, $black, $font, substr($code, 1, 1));
-			imagettftext($image, 20, -35, 65, 35, $black, $font, substr($code, 2, 1));
-			imagettftext($image, 20, 25, 95, 35, $black, $font, substr($code, 3, 1));
-			imagettftext($image, 20, -15, 125, 35, $black, $font, substr($code, 4, 1));
+			$fs = 12;
+			
+			imagettftext($image, $fs, -10, 5, 35, $black, $font, substr($code, 0, 1));
+			imagettftext($image, $fs, 20, 35, 35, $black, $font, substr($code, 1, 1));
+			imagettftext($image, $fs, -25, 65, 25, $black, $font, substr($code, 2, 1));
+			imagettftext($image, $fs, 25, 95, 35, $black, $font, substr($code, 3, 1));
+			imagettftext($image, $fs, -15, 125, 35, $black, $font, substr($code, 4, 1));
 
 			imagejpeg($image, $filename, 100);
 		}
@@ -107,7 +117,7 @@ class Captcha
 	{
 		// returns some random text for the captcha
 		$phrase   = "";
-		$possible = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"; 
+		$possible = "34789ABCDHJKMPQRTWY"; 
 		$i        = 0; 
 		
 		while ($i < $length)

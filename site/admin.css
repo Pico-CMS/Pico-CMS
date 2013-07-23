@@ -162,13 +162,12 @@
 
 #manage_users th
 {
-	background: #fff;
+
 }
 
-#manage_users td
+#manage_users tr.inactive td
 {
-	border-bottom: 1px #363636 solid;
-	border-right: 1px #363636 solid;
+	font-style: italic;
 }
 
 .spaced
@@ -379,7 +378,7 @@ div.setting_icon
  padding: 5px;
  font-size: 10px;
  background: #fff;
- height: 140px;
+ height: 360px;
  overflow: auto;
 }
 

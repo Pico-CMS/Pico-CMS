@@ -82,7 +82,7 @@ Class stacked Extends CFLayout
 				}
 				break;
 			case 'file': 
-				$field = '<input type="file" name="fields['.$counter.']" />';
+				$field = '<input type="hidden" name="fields['.$counter.']" value="" /><input type="file" name="fields['.$counter.']" />';
 				break;
 			case 'terms':
 				$field = '<textarea class="terms" readonly="readonly">'.implode("\n", $options).'</textarea>

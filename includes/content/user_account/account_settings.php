@@ -156,11 +156,11 @@ $output = '
 <table class="user_account" border="0" cellpadding="0" cellspacing="0">
 <tr>
 	<td class="left">First Name *</td>
-	<td class="right"><input type="text" name="first_name" value="'.$user_info['first_name'].'" /></td>
+	<td class="right"><input type="text" name="first_name" value="'.$user_info['first_name'].'" class="text" /></td>
 </tr>
 <tr>
 	<td class="left">Last Name *</td>
-	<td class="right"><input type="text" name="last_name" value="'.$user_info['last_name'].'" /></td>
+	<td class="right"><input type="text" name="last_name" value="'.$user_info['last_name'].'" class="text" /></td>
 </tr>
 <tr>
 	<td class="left">New password *<br />(Leave blank for no change)</td>
@@ -202,7 +202,7 @@ foreach ($profile_data as $item)
 
 $output .= '
 </table>
-<input type="submit" value="Continue" />
+<input type="submit" value="Continue" class="submit" />
 </form>';
 
 echo $output;

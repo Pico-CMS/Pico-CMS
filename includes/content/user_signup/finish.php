@@ -22,17 +22,31 @@ if ($payment_details['cost'] == 0)
 		require_once('includes/content/user_login/functions.php');
 		UL_LogUserIn($cookie['user_id']);
 	}
-	
-	$output = str_replace('LINK', $settings['redirection_link'], $settings['step3']);
+
+	$redir_link = trim($settings['redirection_link']);
+	$output = str_replace('LINK', $redir_link, $settings['step3']);
 	echo '<p class="instructions">'.nl2br($output).'</p>';
-	echo '<meta http-equiv="refresh" content="10;url='.$settings['redirection_link'].'" /> ';
+
+	if (strlen($redir_link) > 0)
+	{
+		echo '<meta http-equiv="refresh" content="10;url='.$settings['redirection_link'].'" /> ';
+	}
 	
+	// remove cookie for signing up
 	setcookie($cookie_key, '', time() - 3600, '/', CookieDomain());
-	
+
 	if ($payment_details['duration'] == 0)
 	{
 		// forever!
-		$db->run('UPDATE `'.DB_USER_TABLE.'` SET `user_active`=? WHERE `id`=?', 1, $cookie['user_id']);
+		if ($settings['moderator_approval'] == 1)
+		{
+			// need to send email to moderator
+			US_SendModeratorEmail($cookie['user_id'], $settings['moderators']);
+		}
+		else
+		{
+			$db->run('UPDATE `'.DB_USER_TABLE.'` SET `user_active`=? WHERE `id`=?', 1, $cookie['user_id']);
+		}
 	}
 	else
 	{
