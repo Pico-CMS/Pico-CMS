@@ -6,4 +6,4 @@ Redirect 301 /help.pdf http://pico-cms.com/user-manual
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule .* /index.php [L]
+RewriteRule .* ./index.php [L]
