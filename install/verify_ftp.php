@@ -97,7 +97,7 @@ if (sizeof($ftp_error) == 0)
 	$_SESSION['SAVE_SETTINGS']['ftp_password'] = $ftp_pass;
 	$_SESSION['SAVE_SETTINGS']['ftp_path'] = $ftp_path;
 	$_SESSION['SAVE_SETTINGS']['ftp_sftp'] = $ftp_secure;
-	$_SESSION['SAVE_SETTINGS']['pico_build_version'] = 1092;
+	$_SESSION['SAVE_SETTINGS']['pico_build_version'] = 1093;
 }
 
 ?>
