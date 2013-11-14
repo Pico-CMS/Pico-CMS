@@ -101,6 +101,8 @@ else
 	}
 	else
 	{
+		define('CURRENT_PAGE', 0);
+		define('CURRENT_ALIAS', '');
 		echo '<div class="error">There is no default page established</div>';
 	}
 }
