@@ -10,6 +10,13 @@ function MG_Install(form)
 	form.elements.submitbtn.disabled = true;
 	var column = form.elements.location.value;
 	var component_id = form.elements.component_id.value;
+
+	if (form.elements.gallery_style.value == '')
+	{
+		alert('Please choose a gallery style before continuing');
+		form.elements.submitbtn.disabled = false;
+		return;
+	}
 	
 	new Ajax.Form(form, { onComplete: function(t) {
 		var func = function() {
@@ -61,25 +68,31 @@ function MG_AddFile(filename)
 	var category_id   = document.getElementById('category_id').value;
 	var target_url = url('includes/content/media/submit.php?page_action=add&filename='+urlencode(filename)+'&instance_id='+instance_id+'&component_id='+component_id+'&category_id='+category_id);
 	
-	new Ajax.Request(target_url);
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		if (t.responseText.length > 0) { alert(t.responseText); }
+	}});
 }
 
 function MG_LoadImages(instance_id, component_id, category_id)
 {
 	var target_url  = url('includes/content/media/image_list.php?instance_id='+instance_id+'&component_id='+component_id+'&category_id='+category_id);
-	new Ajax.Updater('mg_preview_window', target_url);
+	new Ajax.Updater('mg_preview_window', target_url, { onComplete: function() {
+		MG_Load();
+	}});
 }
 
-function MG_ReloadImages()
+function MG_ReloadImages(complete_msg)
 {
 	// this function is here so we don't have to mess with the flash
-	MG_EditImageClose();
 	
 	var instance_id  = document.getElementById('instance_id').value;
 	var component_id = document.getElementById('component_id').value;
 	var category_id  = document.getElementById('category_id').value;
 	var target_url  = url('includes/content/media/image_list.php?instance_id='+instance_id+'&component_id='+component_id+'&category_id='+category_id);
-	new Ajax.Updater('mg_preview_window', target_url);
+	new Ajax.Updater('mg_preview_window', target_url, { onComplete: function() {
+		MG_Load();
+		MG_Status(complete_msg);
+	}});
 }
 
 function MG_RefreshImages()
@@ -94,15 +107,6 @@ function MG_RefreshImages()
 	func.delay(2);
 }
 
-function MG_MoveImage(image_id, direction)
-{
-	var instance_id = document.getElementById('instance_id').value;
-	var target_url  = url('includes/content/media/submit.php?page_action=move&image_id='+image_id+'&instance_id='+instance_id+'&direction='+direction);
-	new Ajax.Request(target_url, { onComplete: function() {
-		MG_ReloadImages();
-	} } );
-}
-
 function MG_DeleteImage(image_id)
 {
 	if (confirm('Are you sure you want to delete this file from the gallery?'))
@@ -110,16 +114,8 @@ function MG_DeleteImage(image_id)
 		var instance_id = document.getElementById('instance_id').value;
 		var target_url  = url('includes/content/media/submit.php?page_action=delete&image_id='+image_id+'&instance_id='+instance_id);
 		new Ajax.Request(target_url, { onComplete: function() {
-			MG_ReloadImages();
+			MG_ReloadImages('Image Deleted');
 		} } );
-	}
-}
-
-function MG_EditImageClose()
-{
-	if (CKEDITOR.instances.image_description)
-	{
-		CKEDITOR.instances.image_description.destroy();
 	}
 }
 
@@ -182,28 +178,25 @@ function MG_CustomThumbnail(filename)
 	
 }
 
-function MG_PreviewStyle(obj)
+function MG_PreviewStyle(value)
 {
 	document.getElementById('mg_preview_style').innerHTML = 'Loading Preview...';
-	if (obj.value.length > 0)
+	if (value.length > 0)
 	{
-		var target_url = url('includes/content/media/preview.php?viewtype='+obj.value);
+		var target_url = url('includes/content/media/preview.php?viewtype='+value);
 		new Ajax.Updater('mg_preview_style', target_url);
 	}
 }
 
 function MG_DestroyCK()
 {
-	if (CKEDITOR.instances.category_html)
-	{
-		CKEDITOR.instances.category_html.destroy();
-	}
+	if (CKEDITOR.instances.category_html) { CKEDITOR.instances.category_html.destroy(); }
+	if (CKEDITOR.instances.mg_description) { CKEDITOR.instances.mg_description.destroy(); }
 }
 
 function MG_Close()
 {
 	MG_DestroyCK();
-	MG_EditImageClose();
 	var component_id = document.getElementById('component_id').value;
 	Pico_ReloadComponent(component_id);
 }
@@ -221,7 +214,7 @@ function MG_EditHTML(category_id)
 	var target_url = url('includes/content/media/category_html.php?category_id='+category_id);
 	new Ajax.Updater('mg_preview_window', target_url, { onComplete: function() {
 		// ckeditor
-		CKEDITOR.replace('category_html', { height: 250 });
+		CKEDITOR.replace('category_html', { height: 330 });
 	} });
 }
 
@@ -232,6 +225,7 @@ function MG_UpdateCategoryHTML(form)
 	new Ajax.Form(form, { onComplete: function() {
 		MG_DestroyCK();
 		MG_ShowCategories();
+
 	} } );
 }
 
@@ -242,3 +236,131 @@ function MG_FileTop(image_id)
 		MG_ReloadImages();
 	} } );
 }
+
+function MG_ReloadEntries()
+{
+	MG_StripeEntries();
+
+	var ids = new Array;
+	$$('#mg_preview_window div.image_holder').each(function(el) {
+		var gid = $(el).getAttribute('gallery_id');
+		ids.push(gid);
+	});	
+
+	var instance_id = $('instance_id').value;
+	var category_id = $('category_id').value;
+	var order = ids.join(',');
+
+	var target_url = 'includes/content/media/submit.php?page_action=set_order&instance_id='+instance_id+'&category_id='+category_id+'&order='+order;
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		if (t.responseText.length > 0) { alert(t.responseText); } else { MG_Status('Gallery Saved'); }
+	}});
+}
+
+function MG_StripeEntries()
+{
+	var counter = 0;
+	$$('#mg_preview_window div.image_holder').each(function(el) {
+		var id = $(el).getAttribute('id');
+
+		$(el).removeClassName('a');
+		$(el).removeClassName('b');
+
+		var className = (counter % 2 == 0) ? 'a' : 'b';
+		counter = counter+ 1;
+
+		$(el).addClassName(className);
+	});	
+
+	$$('#mg_preview_window input.text').each(function(el) {
+		$(el).on('keyup', function() {
+			if ($(el).saveFunc != null) {
+				$(el).saveFunc.stop();
+			}
+			
+			$(el).saveFunc = new PeriodicalExecuter(function(pe) {
+				var field = $(el).getAttribute('name');
+				var id    = $(el).getAttribute('file_id');
+				MG_Change(field, $(el), id);
+				pe.stop();
+			}, 1);
+		});
+	});	
+}
+
+function MG_Load()
+{
+	Position.includeScrollOffsets = true; 
+	Sortable.create('mg_preview_window', { scroll: 'mg_preview_window', tag:'div', only: 'image_holder', hoverclass: 'hover', handle: 'mover', onUpdate: function() { MG_ReloadEntries(); } });
+	MG_StripeEntries();
+}
+
+function MG_Status(txt)
+{
+	if (txt == null) { txt = ''; }
+	$('gallery_edit_status').innerHTML = txt;
+
+	var func = function() {
+		$('gallery_edit_status').innerHTML = '';
+	}
+
+	func.delay(3);
+}
+
+function MG_Change(field, obj, id)
+{
+	var target_url = url('includes/content/media/submit.php?page_action=change&field='+field+'&id='+id+'&value='+urlencode(obj.value));
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		if (t.responseText.length > 0) { alert(t.responseText); } else {
+			MG_Status('Photo Updated');
+		}
+	}});
+}
+
+function MG_EditDescription(file_id)
+{
+	$('gallery_aux_window').innerHTML = 'Loading...';
+	$('gallery_aux_window').setStyle({display: 'block'});
+	var target_url = url('includes/content/media/submit.php?page_action=edit_desc&file_id='+file_id);
+
+	new Ajax.Updater('gallery_aux_window', target_url, { onComplete: function() {
+		var is_html = ($('mg_is_html').value == 1) ? true : false;
+
+		if (is_html)
+		{
+			CKEDITOR.replace('mg_description', { height: 275 });
+		}
+	}});
+}
+
+function MG_HideDescription()
+{
+	$('gallery_aux_window').setStyle({display: 'none'});
+	if (CKEDITOR.instances.mg_description) { CKEDITOR.instances.mg_description.destroy(); }
+}
+
+function MG_CloseDescription(mode)
+{
+	if (mode < 2)
+	{
+		// save
+		var is_html = ($('mg_is_html').value == 1) ? true : false;
+		var form    = $('mg_desc_form');
+		var file_id = form.elements.file_id.value;
+
+		if (is_html) {
+			form.elements.mg_description.value = CKEDITOR.instances.mg_description.getData();
+		}
+		
+		new Ajax.Form(form, { onComplete: function(t) {
+			$('mg_desc_'+file_id).innerHTML = t.responseText;
+			if (mode > 0) { MG_HideDescription(); }
+			MG_Status('Description Saved');
+		}});
+	}
+	else
+	{
+		MG_HideDescription();
+	}
+}
+

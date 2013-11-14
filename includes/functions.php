@@ -188,7 +188,7 @@ function CheckInstanceID($component_id, $instance_id)
 	}
 }
 
-function ShowComponent($component_id, $instance_id, $component_output, $author_editable)
+function ShowComponent($component_id, $instance_id, $component_output, $author_editable, $hideHeaders = false)
 {
 	global $db, $body;
 
@@ -202,7 +202,12 @@ function ShowComponent($component_id, $instance_id, $component_output, $author_e
 		}
 	}
 
-	if (USER_ACCESS > 2) { echo '<div class="content_box_bg" component_id="'.$component_id.'" instance_id="'.$instance_id.'"><div class="pico_move" id="move_'.$component_id.'"></div>'; }
+	if (USER_ACCESS > 2) { 
+		if (!$hideHeaders) {
+			echo '<div class="content_box_bg" component_id="'.$component_id.'" instance_id="'.$instance_id.'">';
+		}
+		echo '<div class="pico_move" id="move_'.$component_id.'"></div>'; 
+	}
 
 	$content_class  = 'content';
 	$content_class .= (strlen($component_output) == 0) ? ' no_content' : '';
@@ -214,9 +219,54 @@ function ShowComponent($component_id, $instance_id, $component_output, $author_e
 	echo '<div class="header"></div>';
 	echo '<div class="'.$content_class.'">'.$author_extra.$component_output.'</div>';
 	echo '<div class="footer"></div>';
-	if (USER_ACCESS > 2) { echo '<div class="clear"></div></div>'; }
+	if (USER_ACCESS > 2) { 
+		echo '<div class="clear"></div>'; 
+
+		if (!$hideHeaders) {
+			echo '</div>';
+		}
+	}
 
 	if (strlen($component_output) == 0) { echo '</div>'; }
+}
+
+function GetComponentByInstanceID($instance_id)
+{
+	// get component_id
+	global $db;
+	$component_id = $db->result('SELECT `component_id` FROM `'.DB_CONTENT.'` WHERE `instance_id`=?', $instance_id);
+	
+	global $db, $body;
+	
+	ob_start();
+	$component_info = $db->assoc('SELECT * FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
+	if ( ($component_info != FALSE) and (USER_ACCESS >= $component_info['access']) )
+	{
+		CheckInstanceID($component_id, $instance_id);
+		$component_options = GetContentOptions($component_info['folder']);
+		$author_editable   = ($component_options['author_editable'] == TRUE) ? TRUE : FALSE;
+		
+		$inc_file = 'includes/content/'.$component_info['folder'].'/'.$component_options['content_file'];
+		if ((file_exists($inc_file)) and (!is_dir($inc_file)))
+		{
+			$additional_info = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` WHERE `component_id`=?', $component_id);
+			$component_settings = unserialize($additional_info);
+			if (!is_array($component_settings)) { $component_settings = array(); }
+
+			// same as directly below
+			ob_start();
+			include($inc_file);
+			$component_output = ob_get_contents();
+			ob_end_clean();
+
+			echo '<div class="content_'.$component_info['folder'].'">';
+			ShowComponent($component_id, $instance_id, $component_output, $author_editable, true);
+			echo '</div>';
+		}
+	}
+	$return = ob_get_contents();
+	ob_end_clean();
+	return $return;
 }
 
 function GetComponent($component_id, $page_id, $req_uri)
@@ -1551,11 +1601,13 @@ function Pico_Cleanse($post, $strip_tags = false)
 function Pico_GetClosingBody()
 {
 	// define google analytics
-	global $body;
+	global $body, $db;
 
 	$output = '';
 
-	if (Pico_Setting('use_google_analytics') == 1)
+	$check = $db->result('SELECT `disable_analytics` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', CURRENT_PAGE);
+
+	if ((Pico_Setting('use_google_analytics') == 1) and ($check == '0'))
 	{
 		$ua_code = Pico_Setting('ga_code');
 		$google_anayltics = <<<HTML
@@ -1577,6 +1629,7 @@ HTML;
 
 	$output .= $google_anayltics;
 	$output .= Pico_Setting('html_body');
+
 	return $output;
 }
 
@@ -1719,6 +1772,26 @@ function Pico_FTPWritable($directory)
 
 function Pico_StorageDir($directory)
 {
+	$base = 'includes/storage/';
+	if (substr($directory, 0, strlen($base)) != $base) {
+		//$directory = substr($directory, strlen($base));
+		$directory = $base . $directory;
+	}
+
+	if (is_writable($directory)) { return true; }
+
+	$ftp = Pico_GetFTPObject();
+	if (is_object($ftp)) { $cwd = $ftp->pwd(); }
+	
+	$writable = Pico_FTPWritable($directory);
+
+	if (is_object($ftp)) { $ftp->chdir($cwd); }
+	return $writable;
+}
+
+/*
+function Pico_StorageDir($directory)
+{
 	$ftp = Pico_GetFTPObject();
 	$cwd = $ftp->pwd();
 	$base = 'includes/storage/';
@@ -1733,6 +1806,7 @@ function Pico_StorageDir($directory)
 	$ftp->chdir($cwd);
 	return $writable;
 }
+*/
 
 // to get pico settings form because lazy
 function Pico_GetSettingsForm($component_id, $innerHTML, $callback = '')
@@ -1810,6 +1884,33 @@ function Pico_SendAccountDeclinedEmail($user_id)
 		$message = str_replace('FIRST_NAME', $user_info['first_name'], $message);
 
 		Pico_SendUserEmail($user_info['email_address'], $subject, $message);
+	}
+}
+
+function Pico_CheckTableColumn($table, $col, $definition='', $delete = false)
+{
+	global $db;
+
+	$fields     = $db->assoc('SHOW COLUMNS FROM `'.$table.'`');
+	$all_fields = array();
+	foreach ($fields as $f)
+	{
+		$all_fields[] = $f['Field'];
+	}
+	
+	if ($delete)
+	{
+		if (in_array($col, $all_fields))
+		{
+			$db->run('ALTER TABLE `'.$table.'` DROP COLUMN ' . $col);
+		}
+	}
+	else
+	{
+		if (!in_array($col, $all_fields))
+		{
+			$db->run('ALTER TABLE `'.$table.'` ADD COLUMN `'.$col.'` ' . $definition);
+		}
 	}
 }
 

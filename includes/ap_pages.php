@@ -64,6 +64,10 @@ else
 	<td>Home Page</td>
 	<td><input type="checkbox" name="page[is_default]" value="1" <?=($page_details['is_default'])?'checked="checked"':''?>/></td>
 </tr>
+<tr>
+	<td>Disable Analytics</td>
+	<td><input type="checkbox" name="page[disable_analytics]" value="1" <?=($page_details['disable_analytics'])?'checked="checked"':''?>/></td>
+</tr>
 </table>
 <?php
 if ($page_action == 'edit_page')

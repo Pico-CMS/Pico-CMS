@@ -13,10 +13,9 @@ include($config_file);
 echo '<p>'.$options['text_description'].'</p>';
 
 ?>
-<div style="width: 200px; float: left">
 <table class="pico_editlist" align="left">
 <tr class="a">
-	<td class="bold">Has Categoriess</td>
+	<td class="bold">Has Categories</td>
 	<td><?=($options['categories']==TRUE)?'Yes':'No'?></td>
 </tr>
 <tr class="b">
@@ -36,15 +35,3 @@ echo '<p>'.$options['text_description'].'</p>';
 	<td><?=sizeof($settings)?></td>
 </tr>
 </table>
-</div>
-<div style="float: right">
-<?php
-$preview_file = 'includes/content/media/galleries/'.$viewtype.'/preview.jpg';
-if (file_exists($preview_file))
-{
-	echo '<p class="bold">Preview:</p>';
-	echo '<img src="'.$body->url($preview_file).'" />';
-}
-?>
-</div>
-<div class="clear"></div>

@@ -29,12 +29,21 @@ if ($_GET['mode'] != 'reload')
 require_once('core.php');
 ob_start();
 
+ReadToEcho('site/prototype.js');
+echo "\n";
 ReadToEcho('site/core.js');
 echo "\n";
+
+
 // if admin include admin.js (not there yet)
 
 if (USER_ACCESS > 1)
 {
+	// include ckeditor
+	echo "var CKEDITOR_BASEPATH = url('includes/ckeditor/');\n";
+	ReadToEcho('includes/ckeditor/ckeditor.js');
+	echo "\n";
+
 	ReadToEcho('site/admin.js');
 	
 	// check to see if we are using the new CSS editor
@@ -98,7 +107,10 @@ echo $javascript;
 if ( ($rewrite) and (is_writable($cache_file)) and (USER_ACCESS == 0) )
 {
 	$h = fopen($cache_file, 'w');
-	fwrite($h, $javascript);
+	
+	require_once('includes/jsmin.class.php');
+	$jsmin_php = JSMin::minify($javascript);
+	fwrite($h, $jsmin_php);
 	fclose($h);
 }
 

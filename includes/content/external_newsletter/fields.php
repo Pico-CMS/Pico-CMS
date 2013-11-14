@@ -32,6 +32,12 @@ $fields = array(
 			'desc' => 'Your Constant Contact password'
 		),
 	),
+	'em' => array(
+		'address' => array(
+			'name' => 'Email Address', 
+			'desc' => 'Where you want the signups sent'
+		),
+	),
 );
 
 ?>

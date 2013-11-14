@@ -27,6 +27,7 @@ function gallery_get_base_options($component_id)
 	if (!isset($GLOBALS[$key]))
 	{
 		$config_file = 'includes/content/media/galleries/'.$folder.'/config.php';
+		if (!is_file($config_file)) { return FALSE; }
 		include($config_file);
 		$GLOBALS[$key] = $options;
 	}
@@ -262,7 +263,8 @@ function make_new_image_bs($full_path, $dest, $desired_width = 320, $desired_hei
 
 function file_extension($filename)
 {
-	return strtolower(array_pop(explode('.', $filename)));
+	$parts = explode('.', $filename);
+	return strtolower(array_pop($parts));
 }
 
 // same as get_gallery_image() but will check for thumbnail... not all galleries have thumbnails so this is a separate function
@@ -298,15 +300,29 @@ function get_gallery_thumb($image_id)
 	
 	$folder       = get_gallery_folder($component_id);
 	$options      = gallery_get_base_options($component_id); // options set by the config file, may or may not be user configurable
+
+	$storage_dir = 'includes/storage/media/'.$component_id.'/';
+	if (!Pico_StorageDir($storage_dir)) { return ''; }
 	
-	$master_file = 'includes/content/media/files/'.$image_id .'.'.$image_info['extension']; // these extension variables different on purpose
-	$thumb_file  = 'includes/content/media/galleries/'.$folder.'/files/'.$image_id .'_thumb.jpg';
+	$master_file = 'includes/storage/media/source/'.$image_id .'.'.$image_info['extension']; // these extension variables different on purpose
+
+	$thumb_file  = $storage_dir.$image_id .'_thumb.jpg';
 	$image_size  = @getimagesize($thumb_file);
-	
+
 	if ( (!file_exists($thumb_file)) or ($image_size[0] != $options['thumb_width']) or ($image_size[1] != $options['thumb_height']) )
 	{
 		// if not make a new one
-		make_new_image($master_file, $thumb_file, $options['thumb_width'], $options['thumb_height']);
+		$w = $options['thumb_width'];
+		$h = $options['thumb_height'];
+
+		if ( ($w != 0) and ($h != 0) )
+		{
+			make_new_image_ws($master_file, $thumb_file, $w, $h);
+		}
+		else
+		{
+			make_resized_image($master_file, $thumb_file, $w, $h);
+		}
 	}
 	return $thumb_file;
 }
@@ -346,14 +362,14 @@ function get_gallery_image($image_id)
 	
 	$options  = gallery_get_base_options($component_id); // options set by the config file, may or may not be user configurable
 	$settings = gallery_get_settings($component_id); // end user configurable options, we are only using this to see if the user has selected a method of image resizing
-	
-	//echo '<pre>'.print_r($options, TRUE).'</pre>';
+
+	$storage_dir = 'includes/storage/media/'.$component_id.'/';
+	if (!Pico_StorageDir($storage_dir)) { return ''; }
 	
 	// get the master image, and destination image
 	$extension   = ($settings['imageUploadMode'] == 'pad') ? '.png' : '.jpg';
-	$master_file = 'includes/content/media/files/'.$image_id .'.'.$image_info['extension']; // these extension variables different on purpose
-	$image_file  = 'includes/content/media/galleries/'.$folder.'/files/'.$image_id . $extension;
-	
+	$master_file = 'includes/storage/media/source/'.$image_id .'.'.$image_info['extension']; // these extension variables different on purpose
+	$image_file  = $storage_dir.$image_id . $extension;
 	
 	$image_size  = @getimagesize($image_file);
 	
@@ -437,6 +453,83 @@ function gallery_output_image($im, $dest, $mode)
 		else
 		{
 			imagejpeg($im, $dest, 100);
+		}
+	}
+}
+
+function gallery_getfiles($dir)
+{
+	$filelist = array();
+
+	if ($h = opendir($dir))
+	{
+		while (false !== ($file = readdir($h)))
+		{
+			if ( ($file != '.') and ($file != '..') )
+			{
+				$filelist[] = $file;
+			}
+		}
+	}
+	return $filelist;
+}
+
+function gallery_checkupgrade()
+{
+	global $db;
+
+	$source_dir = 'includes/content/media/files/';
+	if (is_dir($source_dir))
+	{
+		// some files need to be moved
+
+		$storage_dir = 'includes/storage/media/source/';
+		if (@Pico_StorageDir($storage_dir)) 
+		{
+			// need to move a bunch of files
+			$ftp   = Pico_GetFTPObject();
+			$files = gallery_getfiles($source_dir);
+			//echo '<pre>'.print_r($files, true).'</pre>';
+			//return;
+			if (sizeof($files) > 0)
+			{
+				foreach ($files as $file)
+				{
+					if ((CheckWritable($source_dir)) and (CheckWritable($source_dir . $file)))
+					{
+						rename($source_dir . $file, $storage_dir . $file);
+					}
+				}
+			}
+			$check = gallery_getfiles($source_dir);
+
+			if (sizeof($check) == 0) 
+			{
+				$ftp->deleteRecursive($source_dir);
+			}
+
+			$gallery_types = gallery_getfiles('includes/content/media/galleries/');
+			foreach ($gallery_types as $dir)
+			{
+				$full_dir = 'includes/content/media/galleries/' . $dir . '/files/';
+				if (is_dir($full_dir)) 
+				{
+					$ftp->deleteRecursive($full_dir);
+				}
+			}
+
+			// get all the gallery components, make storage folders
+			$gallery_components = $db->force_multi_assoc('SELECT * FROM `'.DB_COMPONENT_TABLE.'` WHERE `folder`=?', 'media');
+			if (is_array($gallery_components))
+			{
+				foreach ($gallery_components as $component)
+				{
+					$component_id = $component['component_id'];
+					@Pico_StorageDir('includes/storage/media/' . $component_id);
+				}
+			}
+
+			// remove lingering upload folder, we dont want this!
 		}
 	}
 }

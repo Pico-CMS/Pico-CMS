@@ -68,21 +68,24 @@ if (sizeof($files) > 0)
 			$source = $full_path . $file;
 			$mtime = filemtime($source);
 			$extension = file_extension($file);
-			$thumbnail = 'includes/storage/ckhtml/thumbnails/ ' . (md5($mtime . '-' . $file) . '.png');
+			$thumbnail = 'includes/storage/ckhtml/thumbnails/' . (md5($mtime . '-' . $file) . '.png');
 			
 			$can_has_thumbs = array('png', 'jpeg', 'jpg', 'gif');
 			$has_thumb = (in_array($extension, $can_has_thumbs)) ? TRUE : FALSE;
 			
 			$link = "window.opener.CKEDITOR.tools.callFunction($fn, '".addslashes($body->url($source))."', ''); window.close()";
-			
-			if (($has_thumb) and (Pico_StorageDir('ckhtml/thumbnails/')))
+
+			if (($has_thumb) and (!file_exists($thumbnail)) and (Pico_StorageDir('ckhtml/thumbnails/')))
 			{
-				if (!file_exists($thumbnail))
-				{
-					make_new_image_ws($source, $thumbnail, 100, 100);
-					chmod($thumbnail, 0666);
+				$img = new Image($source);
+				$result = $img->GetPNG(100, 100, $thumbnail);
+				if (!$result) { 
+					$has_thumb = false;
 				}
-				
+			}
+			
+			if ($has_thumb)
+			{
 				echo '<div class="thumbnail">
 					<div class="delete_image" onclick="Browse_DeleteFile(\''.$file.'\')"></div>
 					<div class="edit_image" onclick="Browse_EditFile(\''.$file.'\')"></div>
@@ -115,8 +118,11 @@ if (sizeof($files) > 0)
 				$thumbnail = 'includes/storage/ckhtml/thumbnails/' . (md5($mtime . '-' . $file) . '.png');
 				if (!file_exists($thumbnail))
 				{
-					make_new_image_ws($source, $thumbnail, 100, 100);
-					chmod($thumbnail, 0666);
+					$img = new Image($source);
+					$result = $img->GetPNG(100, 100, $thumbnail);
+					if (!$result) { 
+						$has_thumb = false;
+					}
 				}
 				list($width, $height) = getimagesize($source);
 			}

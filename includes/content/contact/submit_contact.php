@@ -19,7 +19,7 @@ if ( (is_bool($result)) and ($result == TRUE) )
 		}
 		else {
 			$captcha = new Captcha($instance_id, $db, getenv('REMOTE_ADDR')); // generates a new captcha, or restores it if we are verifying
-			$captcha_verified = $captcha->Verify($_POST['verify']);
+			$captcha_verified = $captcha->Verify(strtoupper($_POST['verify']));
 		}
 
 		if ($captcha_verified)

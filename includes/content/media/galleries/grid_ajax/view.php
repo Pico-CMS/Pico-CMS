@@ -7,6 +7,8 @@ $image_data = $db->force_multi_assoc('SELECT * FROM `'.$media_files.'` WHERE `in
 $settings = gallery_get_settings($component_id);
 //echo '<pre>'.print_r($settings, TRUE).'</pre>';
 
+if (!is_numeric($settings['num_per_row'])) { $settings['num_per_row'] = 5; }
+
 $output = '';
 $image_output = '';
 
@@ -20,6 +22,7 @@ if ( (is_array($image_data)) and (sizeof($image_data) > 0) )
 	$output .= '<td class="upper outer_right"></td></tr>';
 	
 	$counter = 0;
+	$index = 0;
 	foreach ($image_data as $i)
 	{
 		if ($counter == 0)
@@ -50,16 +53,17 @@ if ( (is_array($image_data)) and (sizeof($image_data) > 0) )
 				}
 			}
 			
-			
+			$disp = ($index == 0) ? 'block' : 'none';
 			$output .= '<td class="thumbnail"><img src="'.$thumb_path.'" onmouseover="MG_ShowGridImage('.$i['file_id'].')" /></td>';
 			
-			$image_output .= '<div id="grid'.$i['file_id'].'" class="grid_image" style="display: none">
+			$image_output .= '<div id="grid'.$i['file_id'].'" class="grid_image" style="display: '.$disp.'">
 			<div class="image"><img src="'.$image_path.'" /></div>
 			<div class="description">'.$desc.'</div>
 			</div>';
 		}
 		
 		$counter++;
+		$index++;
 		if ($counter == $settings['num_per_row'])
 		{
 			$output .= '<td class="mid outer_right"></td></tr>';

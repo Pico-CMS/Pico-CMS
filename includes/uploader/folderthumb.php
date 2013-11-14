@@ -22,10 +22,6 @@ function folder_thumb($folder)
 					if (in_array($extension, $allowed))
 					{
 						$files[] = $file;
-						if (sizeof($files) == 4)
-						{
-							break;
-						}
 					}
 				}
 			}
@@ -34,13 +30,11 @@ function folder_thumb($folder)
 		
 		// see if we have a cached_file
 		
-		$cached_location = 'includes/storage/ckhtml/thumbnails/' . md5(serialize($files)) . '.png';
+		$cached_location = 'includes/storage/ckhtml/thumbnails/folder-' . md5(serialize($files)) . '.png';
 		if (file_exists($cached_location))
 		{
 			return $cached_location;
 		}
-		
-		//print_r($files);
 		
 		$positions = array(
 			array(0,0),
@@ -48,89 +42,45 @@ function folder_thumb($folder)
 			array(0, 31),
 			array(51, 31)
 		);
-		
+
+	
 		// create thumbnail resource
+		// this is the container for the 4 different mini thumbnails
 		$new_im = imagecreatetruecolor(101, 61);
+
 		// add transparency
 		$trans_colour = imagecolorallocatealpha($new_im, 255, 255, 255, 127);
 		imagesavealpha($new_im, true);
 		imagefill($new_im, 0, 0, $trans_colour);
-		
-		$desired_width  = 50;
-		$desired_height = 30;
 
 		if (sizeof($files) == 0) { return FALSE; }
+
+		$num_found = 0;
 		
 		for ($x = 0; $x < sizeof($files); $x++)
 		{
-			$pos  = $positions[$x];
-			$file = $full_path . '/' . $files[$x];
-			
-			$mini_thumb = folder_minithumb($file);
-			imagecopyresampled($new_im, $mini_thumb, $pos[0], $pos[1], 0, 0, $desired_width, $desired_height, $desired_width, $desired_height);
+			$source    = $full_path . '/' . $files[$x];
+			$pos       = $positions[$num_found];
+
+			$mini_file = 'includes/storage/ckhtml/thumbnails/mini-' . md5($source) . '.png';
+			if (!is_file($mini_file)) {
+				$img = new Image($source);
+				$result = $img->GetPNG(50, 30, $mini_file);
+			}
+
+			if (is_file($mini_file)) {
+				$num_found++;
+				$mini_thumb = imagecreatefromstring(file_get_contents($mini_file));
+				imagecopyresampled($new_im, $mini_thumb, $pos[0], $pos[1], 0, 0, 50, 30, 50, 30);
+
+				if ($num_found == 4) { break; }
+			}
 		}
 		
 		imagepng($new_im, $cached_location, 5, PNG_NO_FILTER);
 		return $cached_location;
 	}
 
-}
-
-function folder_minithumb($full_path)
-{
-	//error_reporting(E_ALL);
-	$i = imagecreatefromstring(file_get_contents($full_path));
-	
-	$desired_width  = 50;
-	$desired_height = 30;
-	
-	$width  = imagesx($i);
-	$height = imagesy($i);
-	
-	$original_width  = $width;
-	$original_height = $height;
-	
-	if ($width > $desired_width)
-	{
-		$mod    = $desired_width / $width;
-		$width  = $desired_width;
-		$height = $height * $mod;
-	}
-	
-	if ($height > $desired_height)
-	{
-		$mod    = $desired_height / $height;
-		$height = $desired_height;
-		$width  = $width * $mod;
-	}
-	
-	$final_width  = round($width);
-	$final_height = round($height);
-	
-	// get the trim
-	$x_trim = ($desired_width - $final_width) / 2;
-	$y_trim = ($desired_height - $final_height) / 2;
-	
-	$new_im = imagecreatetruecolor($final_width, $final_height);
-	$trans_colour = imagecolorallocatealpha($new_im, 255, 255, 255, 127);
-	imagefill($new_im, 0, 0, $trans_colour);
-	
-	imagecopyresampled($new_im, $i, 0, 0, 0, 0, $final_width, $final_height, $original_width, $original_height);
-	//imagepng($new_im, $dest, 0, PNG_NO_FILTER); return;
-	
-	$final_im = imagecreatetruecolor($desired_width, $desired_height);
-	// make it transparent bg
-	
-	$trans_colour = imagecolorallocatealpha($final_im, 255, 255, 255, 127);
-	imagesavealpha($final_im, true);
-	imagefill($final_im, 0, 0, $trans_colour);
-	
-	/*
-	$white = imagecolorallocate($final_im, 255, 255, 255);
-	imagefill($final_im, 0, 0, $white);*/
-	
-	imagecopyresampled($final_im, $new_im, $x_trim, $y_trim, 0, 0, $final_width, $final_height, $final_width, $final_height);
-	return $final_im;
 }
 
 function get_num_files($folder)

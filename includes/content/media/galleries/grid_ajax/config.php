@@ -12,7 +12,7 @@ else
 
 $options = array();
 $options['type'] = 'Grid Gallery'; // what you call your content
-$options['description'] = 'Configurable grid thumbnails with side preview'; // a brief description of what your content does, any restrictions, etc
+$options['text_description'] = 'Configurable grid thumbnails with side preview. Very basic javascript gallery'; // a brief description of what your content does, any restrictions, etc
 $options['img_width']    = isset($gallery_options['img_width']) ? $gallery_options['img_width'] : 400;
 $options['img_height']   = isset($gallery_options['img_height']) ? $gallery_options['img_height'] : 300;
 $options['thumb_width']  = isset($gallery_options['thumbnail_size']) ? $gallery_options['thumbnail_size'] : 70; // make zero for none
@@ -38,7 +38,7 @@ $settings = array(
 	'num_per_row'=>array(
 		'name'=>'Number of Thumbnails Per Row',
 		'type'=>'text',
-		'default'=>'6',
+		'default'=>'5',
 	),
 	'thumbnail_size'=>array(
 		'name'=>'Size of Thumbnails',

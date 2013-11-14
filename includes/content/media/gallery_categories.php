@@ -45,6 +45,7 @@ if ($gallery_options['categories'] == FALSE)
 <?php
 $categories = $db->force_multi_assoc('SELECT * FROM `'.$media_categories.'` WHERE `component_id`=? ORDER BY `position` ASC', $component_id);
 $table = '';
+$counter = 0;
 if ( (is_array($categories)) and (sizeof($categories) > 0) )
 {
 	foreach ($categories as $category)
@@ -59,11 +60,13 @@ if ( (is_array($categories)) and (sizeof($categories) > 0) )
 		
 		$num_image = $db->result('SELECT count(1) FROM `'.$media_files.'` WHERE `category_id`=?', $category['category_id']);
 		
-		$table .= '<tr><td>'.$name.'</td><td>'.$num_image.'</td><td>'.$images.$edit.$delete.$up.$down.$html.'</td></tr>';
+		$class = ($counter % 2 == 0) ? 'a' : 'b';
+		$counter++;
+		$table .= '<tr class="'.$class.'"><td>'.$name.'</td><td>'.$num_image.'</td><td>'.$images.$edit.$delete.$up.$down.$html.'</td></tr>';
 	}
 }
 ?>
-<table border="1" cellpadding="3" cellspacing="0">
+<table border="0" cellpadding="2" cellspacing="1" class="admin_list">
 <tr>
 	<th>Category</th>
 	<th>Number of Images</th>

@@ -50,21 +50,25 @@ $blog_drop .= '</select>';
 			<td><input type="checkbox"  name="settings[show_rss]" value="1" <?=($settings['show_rss'] == 1) ? 'checked="checked"' : ''?> /></td>
 		</tr>
 		<tr class="b">
+			<td class="bold">Hide on Subpages</td>
+			<td><input type="checkbox"  name="settings[hide_on_subpages]" value="1" <?=($settings['hide_on_subpages'] == 1) ? 'checked="checked"' : ''?> /></td>
+		</tr>
+		<tr class="a">
 			<td class="bold">Upcoming</td>
 			<td><input type="checkbox"  name="settings[upcoming]" value="1" <?=($settings['upcoming'] == 1) ? 'checked="checked"' : ''?> /></td>
 		</tr>
-		<tr class="a">
+		<tr class="b">
 			<td class="bold">Previous</td>
 			<td><input type="checkbox"  name="settings[past]" value="1" <?=($settings['past'] == 1) ? 'checked="checked"' : ''?> /></td>
 		</tr>
 		</tr>
-		<tr class="b">
+		<tr class="a">
 			<td class="bold">No posts message</td>
 			<td>
 				<textarea name="settings[no_post]" class="ap_textarea_lg"><?=htmlspecialchars($settings['no_post'])?></textarea>
 			</td>
 		</tr>
-		<tr class="a">
+		<tr class="b">
 			<td class="bold">Layout</td>
 			<td>
 				<textarea name="settings[layout]" class="ap_textarea_lg"><?=htmlspecialchars($settings['layout'])?></textarea><br />

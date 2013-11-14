@@ -1,7 +1,7 @@
 <?php
 $options = array();
 $options['type']         = 'Marquee'; // what you call your content
-$options['description']  = 'Side scrolling image Marquee'; // a brief description of what your content does, any restrictions, etc
+$options['text_description']  = 'Side scrolling image Marquee'; // a brief description of what your content does, any restrictions, etc
 $options['swf_width']    = 926;
 $options['swf_height']   = 150;
 $options['img_width']    = 0;

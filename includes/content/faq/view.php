@@ -8,7 +8,7 @@ if ( (is_array($faqs)) and (sizeof($faqs) >0) )
 	foreach ($faqs as $faq)
 	{
 		$question = $faq['question'];
-		$answer   = nl2br($faq['answer']);
+		$answer   = $faq['answer'];
 		echo '<li><a href="#answer_'.$faq['faq_id'].'">'.$question.'</a></li>';
 		
 		$answers .= '<a name="answer_'.$faq['faq_id'].'"></a>';

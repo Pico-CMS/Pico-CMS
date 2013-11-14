@@ -12,6 +12,13 @@ unset($_GET['instance_id']);
 echo '<div id="mg_preview_window">';
 
 $gallery_options = gallery_get_base_options($component_id);
+if ($gallery_options == false)
+{
+	echo '<p>There was an error accessing this gallery. Please remove it (Content > Remove Content > "Completely Remove") 
+	and be sure to select a gallery style before completing installation</p></div>';
+	return;
+}
+
 if ($gallery_options['categories'] == FALSE)
 {
 	// no categories
@@ -43,5 +50,4 @@ else
 }
 
 echo '</div>';
-echo '<button onclick="Pico_CloseAP()">Close</button>';
 ?>

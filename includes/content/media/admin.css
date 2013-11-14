@@ -1,7 +1,7 @@
 #mg_preview_window
 {
 	width: 100%;
-	height: 430px;
+	height: 450px;
 	overflow: auto;
 	background: #fff;
 	padding: 5px;
@@ -10,14 +10,15 @@
 
 #gallery_options
 {
-	width: 100%;
+	/*width: 100%;
 	height: 350px;
 	overflow-y: scroll;
 	overflow-x: none;
 	background: #fff;
-	color: #000;
+	color: #000;*/
 }
 
+/*
 .image_holder
 {
 	height: 115px;
@@ -27,6 +28,34 @@
 	margin: 3px;
 	border: 1px #000 solid;
 	background: #ccc;
+}
+*/
+
+.image_holder
+{
+	border: 1px #333 solid;
+	margin: 2px;
+	position: relative;
+	padding-left: 10px;
+}
+
+.image_holder .mover
+{
+	cursor: move;
+}
+
+.image_holder.a
+{
+	background: #bbde9c;
+}
+
+.image_holder.b
+{
+	background: #cccccc;
+}
+
+.image_holder.hover
+{
 }
 
 .clickable
@@ -54,3 +83,115 @@ input.large
 {
 	width: 300px;
 }
+
+#gallery_edit_status
+{
+	position: absolute;
+	top: 140px;
+	right: 15px;
+	width: 140px;
+	font-style: italic;
+	font-style: 12px;
+}
+
+table.mg_edit_table input.text
+{
+	margin: 0;
+	padding: 1px;
+	border: none;
+	margin: 1px;
+	width: 400px;
+	font-family: Tahoma;
+	font-size: 11px;
+}
+
+table.mg_edit_table div.description
+{
+	background: #fff;
+	padding: 3px;
+	margin: 1px;
+	width: 396px;
+	cursor: pointer;
+	height: 12px;
+	overflow: hidden;	
+}
+
+table.mg_edit_table td.left
+{
+	padding-right: 10px;
+}
+
+#gallery_aux_window
+{
+	position: absolute;
+	border: 1px #000 solid;
+	background: #999;
+	top: 40px;
+	left: 30px;
+	right: 190px;
+	bottom: 30px;
+	padding: 10px;
+	display: none;
+}
+
+textarea.mg_edit_desc
+{
+	width: 550px;
+	height: 380px;
+	resize:none;
+	border: 1px #333 solid;
+}
+
+#mg_desc_form
+{
+	height: auto;
+	width: auto !important;
+	padding: 0;
+}
+
+button.mg_close_desc
+{
+	position: absolute;
+	bottom: 5px;
+}
+
+button.mg_close_desc.one { left: 5px; }
+button.mg_close_desc.two { left: 55px; }
+button.mg_close_desc.three { left: 155px; }
+
+.mg_install_preview
+{
+	display: inline-block;
+	width: 175px;
+	border: 1px #333 solid;
+	border-radius: 5px;
+	padding: 5px;
+	background: #999;
+	margin: 3px;
+}
+
+.mg_install_preview img
+{
+	width: 175px;
+}
+
+#gallery_picker
+{
+	width: 600px !important;
+	height: 400px !important;
+}
+
+.mg_install_preview .title
+{
+	text-align: center;
+	font-weight: bold;
+}
+
+#mg_preview_style
+{
+	position: absolute;
+	top: 65px;
+	right: 10px;
+	width: 165px;
+}
+

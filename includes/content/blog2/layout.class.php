@@ -201,6 +201,10 @@ class Layout
 				{
 					$replace = $this->Output($val['data'], $val['layout'], $val['vars']);
 				}
+				elseif ($varType == 'deprecated')
+				{
+					$replace = $val;
+				}
 				elseif ($varType == 'text')
 				{
 					if (sizeof($parameters) > 0)

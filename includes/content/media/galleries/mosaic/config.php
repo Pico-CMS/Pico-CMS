@@ -12,9 +12,9 @@ else
 
 $options = array();
 $options['type'] = 'Mosaic Gallery'; // what you call your content
-$options['text_description'] = 'Simple Image Gallery.'; // a brief description of what your content does, any restrictions, etc
-$options['swf_width']    = (isset($gallery_options['swf_width'])) ? $gallery_options['swf_width'] : 400;
-$options['swf_height']   = (isset($gallery_options['swf_height'])) ? $gallery_options['swf_height'] : 300;
+$options['text_description'] = 'Simple Image Gallery. You cannot change the size of this gallery.'; // a brief description of what your content does, any restrictions, etc
+$options['swf_width']    = 710;
+$options['swf_height']   = 500;
 $options['img_width']    = $options['swf_width'];
 $options['img_height']   = $options['swf_height'];
 $options['thumb_width']  = 30;
@@ -44,16 +44,6 @@ $settings = array(
 		'name'=>'Delay',
 		'type'=>'text',
 		'default'=>'5',
-	),
-	'swf_width'=>array(
-		'name'=>'Width',
-		'type'=>'text',
-		'default'=>'400',
-	),
-	'swf_height'=>array(
-		'name'=>'Height',
-		'type'=>'text',
-		'default'=>'300',
 	),
 	'imageUploadMode'=>array(
 		'name'=>'Image Upload Mode',

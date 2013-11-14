@@ -32,7 +32,7 @@ if ( (is_array($categories)) and (sizeof($categories) > 0) )
 	
 ?>
 	</div>
-	<div id="gallery_description_<?=$component_id?>">
+	<div class="gallery_content" id="gallery_description_<?=$component_id?>">
 <?php
 // include first category
 	$image_count = ($params[3] == 'image') ? $params[4] : 0;

@@ -122,8 +122,18 @@ table.blog_tablist
 
 table.blog_options td
 {
-	padding: 3px 0;
+	padding: 3px;
 	padding-right: 5px;
+}
+
+table.blog_options td.left
+{
+	font-weight: bold;
+}
+
+table.blog_options td.center
+{
+	text-align: center;
 }
 
 #blog_admin_comments .name,
@@ -200,7 +210,7 @@ ul.variable_list ul li:hover
 	text-decoration: none;
 }
 
-#blog2_tagbox
+#blog2_tagbox, div.blog_subbox
 {
 	position: absolute;
 	left: 15px;
@@ -213,43 +223,85 @@ ul.variable_list ul li:hover
 	overflow: auto;
 }
 
-#blog2_tagbox .tag_col
+#blog2_tagbox .tag_col, div.blog_subbox .col
 {
 	width: 176px;
 	padding-right: 5px;
 	float: left;
 }
 
-#blog2_tagbox .title
+#blog2_tagbox .title, div.blog_subbox .title
 {
 	font-weight: bold;
 	margin: 10px 0;
 	text-align: center;
 }
 
-#blog2_tagbox .active
+#blog2_tagbox .active, div.blog_subbox .active
 {
 	font-weight: bold;
 }
 
-#blog2_tagbox .tag_entry
+#blog2_tagbox .tag_entry, div.blog_subbox .entry
 {
 	border-top: 1px #fff solid;
 	padding: 1px 0 1px 5px;
 }
 
-#blog2_tagbox .tag_entry.a
+#blog2_tagbox .tag_entry.a, div.blog_subbox .entry.a
 {
 	background: #bbde9c;
 }
 
-#blog2_tagbox .tag_entry.b
+#blog2_tagbox .tag_entry.b , div.blog_subbox .entry.b
 {
 	background: #ECECEC;
 }
 
-#blog2_tagbox .tag_entry:hover
+#blog2_tagbox .tag_entry:hover, div.blog_subbox .entry:hover
 {
 	text-decoration: underline;
 	cursor: pointer;
+}
+
+#blog_edit_sidebar
+{
+	position: absolute;
+	top: 48px;
+	right: 0;
+	width: 155px;
+	margin: 0;
+	padding: 0;
+}
+
+#blog_edit_sidebar li
+{
+	list-style-type: none;
+}
+
+#blog_edit_sidebar li.active
+{
+	font-weight: bold;
+}
+
+#blog_status
+{
+	position: absolute;
+	top: 130px;
+	right: 10px;
+	width: 145px;
+}
+
+#blog_category_list, #blog_tags
+{
+	border: 1px #a9abb0 solid;
+	margin-bottom: 5px;
+	padding: 2px;
+	background: #fff;
+	width: 400px;
+}
+
+#blog_tags
+{
+	height: 50px;
 }

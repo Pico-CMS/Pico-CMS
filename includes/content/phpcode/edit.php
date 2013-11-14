@@ -8,5 +8,5 @@ $content = htmlspecialchars($content);
 <input type="hidden" name="instance_id" value="<?=$instance_id?>" />
 <input type="hidden" name="component_id" value="<?=$component_id?>" />
 <input type="hidden" name="php_data" value="" />
-<input type="submit" value="Update" />
+<input type="submit" value="Save" class="co_button co_buton1" />
 </form>

@@ -14,6 +14,7 @@ if (file_exists('includes/config.php'))
 	require_once('includes/database.class.php');
 	require_once('includes/body.class.php');
 	require_once('includes/upload.class.php');
+	require_once('includes/image.class.php');
 }
 else
 {
@@ -73,8 +74,11 @@ else
 		{
 			$request = substr($request, strlen($config['domain_path']));
 		}
-		
-		$parts = explode('/', $request); // Break into an array
+
+		list($keep, $foo) = explode('?', $request);
+		list($keep, $foo) = explode('#', $keep);
+
+		$parts = explode('/', $keep); // Break into an array
 		// Lets look at the array of items we have:
 		$params = array();
 		foreach ($parts as $part)

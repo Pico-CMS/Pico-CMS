@@ -87,15 +87,45 @@ elseif ($params[1] == 'author')
 }
 elseif ($params[1] == 'year')
 {
-	$show_layout        = $settings['section_layout']['archives'];
-	$num_entries        = $settings['section_show']['archives'];
-	$year               = $params[2];
-	$entries            = Blog2_FindPostsByYear($component_id, $year);
-	$page_param_counter = 3;
-	
-	//$body->title = $year . ' - ' .  ( (defined('SITE_TITLE')) ? SITE_TITLE : $body->title);
-	$body->set_title(1, $year);
-	echo '<h2>'.date('F Y', $year).'</h2>';
+	if ($settings['section_layout']['yearly'] == 'month') 
+	{
+		$year = $params[2];
+		$start = mktime(0,0,0, 1, 1, $year);
+		$end   = mktime(23,59,59, 12, 31, $year);
+
+		echo '<h1 class="blog-yearly">'.$year.'</h1>';
+
+		$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `date`>=? AND `date`<=? AND `component_id`=? AND `published`=1 ORDER BY `date` ASC', $start, $end, $component_id);
+		$last_mo = '';
+		if (sizeof($entries) > 0) {
+			echo '<ul class="datelist">';
+			foreach ($entries as $entry) {
+				$mo = date('m', $entry['date']);
+				if ($mo != $last_mo) {
+					$last_mo = $mo;
+					$month   = date('F', $entry['date']);
+					$year    = date('Y', $entry['date']);
+
+					$link = $body->url(CURRENT_ALIAS  . "/date/$year/$mo");
+
+					echo '<li><a href="'.$link.'">'.$month.'</a></li>';
+				}
+			}
+			echo '</ul>';
+		}
+		return;
+	}
+	else
+	{
+		$show_layout        = $settings['section_layout']['archives'];
+		$num_entries        = $settings['section_show']['archives'];
+		$year               = $params[2];
+		$entries            = Blog2_FindPostsByYear($component_id, $year);
+		$page_param_counter = 3;
+		
+		$body->set_title(1, $year);
+		echo '<h2>'.$year.'</h2>';
+	}
 }
 elseif ($params[1] == 'feed')
 {
@@ -123,6 +153,15 @@ elseif ($params[1] == 'search')
 		echo '<p class="no_results">No search results found</p>';
 	}
 }
+elseif ($params[1] == 'blog-preview')
+{
+	// get all entries
+	
+	$entries     = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id` < 0 LIMIT 1');
+	$show_layout = 'full';
+	$num_entries = 1;
+	$page_param_counter = 1;
+}
 elseif ((isset($params[1])) and ($params[1] != 'page'))
 {
 	// see if we have a blog with this story
@@ -138,6 +177,25 @@ elseif ((isset($params[1])) and ($params[1] != 'page'))
 	$desc  = trim($desc);
 
 	$body->set_social($entries[0]['title'], $desc);
+
+	$meta_description = strip_tags($entries[0]['post']);
+	$words = explode(' ', $meta_description);
+	$meta_description = '';
+
+	while ($word = array_shift($words))
+	{
+		if (strlen($meta_description . $word) < 160)
+		{
+			$meta_description .= $word . ' ';
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	$meta_description = trim($meta_description);
+	$body->meta_description($meta_description);
 }
 else
 {

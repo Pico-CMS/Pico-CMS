@@ -12,7 +12,7 @@ else
 
 $options = array();
 $options['type'] = 'Javascript Gallery'; // what you call your content
-$options['text_description'] = ''; // a brief description of what your content does, any restrictions, etc
+$options['text_description'] = 'Rotator that works entirely with Javascript, no flash'; // a brief description of what your content does, any restrictions, etc
 $options['img_width']    = isset($gallery_options['img_width']) ? $gallery_options['img_width'] : 640;
 $options['img_height']   = isset($gallery_options['img_height']) ? $gallery_options['img_height'] : 300;
 

@@ -11,4 +11,5 @@ $options['admin_css'] = 'admin.css'; // same as static, but if logged in as mode
 $options['on_edit_load'] = 'PC_Load();';
 $options['delete_file'] = ''; // file that will be called in addition to removing the component from the content-links table
 $options['install_file'] = ''; // file that will be called after initally installing the component (good time to gather required information for your component, or create an SQL table if needed)
+$options['author_editable'] = TRUE; 
 ?>

@@ -55,20 +55,6 @@ $image_info = $db->assoc('SELECT * FROM `'.$media_files.'` WHERE `category_id`=?
 // format description
 
 $desc = $image_info['description'];
-//$desc = nl2br($desc);
-$lines = explode("\n", $desc);
-$desc  = '';
-for ($x = 0; $x < sizeof($lines); $x++)
-{
-	if ($x == 0)
-	{
-		$desc .= '<b>'.$lines[$x].'</b><br />';
-	}
-	else
-	{
-		$desc .= $lines[$x].'<br />';
-	}
-}
 
 ?>
 <div class="left_pane">

@@ -40,9 +40,11 @@ if ( (sizeof($images) > 0) and (is_array($images)) )
 			
 			$image_output .= '<div class="jscript_image jscript_image_'.$component_id.'" '.$extra.' id="jscript_'.$image['file_id'].'">
 					<input type="hidden" id="jscript_image_id_'.$component_id.'_'.$counter.'" value="'.$image['file_id'].'" />
-					<div class="title">'.$title.'</div>
-					'.$_image.'
-					<div class="description">'.$description.'</div>
+					<div class="image">'.$_image.'</div>
+					<div class="more">
+						<div class="title">'.$title.'</div>
+						<div class="description">'.$description.'</div>
+					</div>
 				</div>';
 			
 			if ($gallery_settings['num_thumbnails'] > 0)

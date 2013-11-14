@@ -20,32 +20,17 @@ if (!isset($entry_info))
 
 	$entry_info = $db->assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id`=?', $entry_id);
 }
-/*
-$lup   = strip_tags($entry_info['last_saved_post']);
-$words = explode(' ', $lup);
-$slice = array_slice($words, 0, 50);
-$lup   = implode(' ', $slice);
 
-$lap  = strip_tags($entry_info['auto_saved_post']);
-$words = explode(' ', $lup);
-$slice = array_slice($words, 0, 50);
-$lap   = implode(' ', $slice);
-*/
+$date1 = ($entry_info['last_saved_date'] != 0) ? date('h:i:sa m/d/Y', $entry_info['last_saved_date']) : 'n/a';
+$date2 = ($entry_info['last_saved_date'] != 0) ? date('h:i:sa m/d/Y', $entry_info['auto_saved_date']) : 'n/a';
+
 ?>
 <h3 class="blog_choice">Restore Previous/Auto Save</h3>
-<table border="0" cellpadding="0" cellspacing="0" class="blog_options">
-<tr>
-	<td class="bold">Last User-Saved Post - <?=date('h:i:sa m/d/Y', $entry_info['last_saved_date'])?></td>
-</tr><tr>
-	<td>
-		<textarea id="last_user_saved_post"><?=$entry_info['last_saved_post']?></textarea>
-	</td>
-</tr>
-<tr>
-	<td class="bold">Last Auto-Saved Post - <?=date('h:i:sa m/d/Y', $entry_info['auto_saved_date'])?></td>
-</tr><tr>
-	<td>
-		<textarea id="last_auto_saved_post"><?=$entry_info['auto_saved_post']?></textarea>
-	</td>
-</tr>
-</table>
+
+<p>Last User-Saved Post - <?=$date1?></p>
+<p class="center"><button onclick="Blog2_RestoreEntry('last_user_saved_post')">Use This Draft</button></p>
+<textarea id="last_user_saved_post"><?=$entry_info['last_saved_post']?></textarea>
+
+<p>Last Auto-Saved Post - <?=$date2?></p>
+<p class="center"><button onclick="Blog2_RestoreEntry('last_auto_saved_post')">Use This Draft</button></p>
+<textarea id="last_auto_saved_post"><?=$entry_info['auto_saved_post']?></textarea>

@@ -7,9 +7,10 @@ if ( (!defined('USER_ACCESS')) or (USER_ACCESS < 3) )
 	exit();
 }
 
-$blog_entries    = DB_PREFIX . 'pico_blog_entries';
-$blog_categories = DB_PREFIX . 'pico_blog_categories';
-$blog_comments   = DB_PREFIX . 'pico_blog_comments';
+$blog_entries        = DB_PREFIX . 'pico_blog_entries';
+$blog_categories     = DB_PREFIX . 'pico_blog_categories';
+$blog_comments       = DB_PREFIX . 'pico_blog_comments';
+$blog_category_links = DB_PREFIX . 'pico_blog_category_links';
 
 $sql = $db->run(<<<SQL
 CREATE TABLE IF NOT EXISTS `$blog_entries` (
@@ -20,7 +21,6 @@ CREATE TABLE IF NOT EXISTS `$blog_entries` (
 	`title` VARCHAR(255) NOT NULL,
 	`tags` blob,
 	`post` longtext,
-	`category` BIGINT(11),
 	`alias` VARCHAR(255) NOT NULL,
 	`published` TINYINT(1) NOT NULL DEFAULT 1,
 	`allow_comments` TINYINT(1) NOT NULL DEFAULT 1,
@@ -61,6 +61,14 @@ CREATE TABLE IF NOT EXISTS `$blog_comments` (
 	`email` VARCHAR(255),
 	`parent` BIGINT(11) NOT NULL DEFAULT 0,
 	PRIMARY KEY(`comment_id`));
+SQL
+);
+
+$sql = $db->run(<<<SQL
+CREATE TABLE IF NOT EXISTS `$blog_category_links` (
+	`post_id` BIGINT(11),
+	`category_id` BIGINT(11)
+);
 SQL
 );
 
@@ -165,6 +173,24 @@ if (!in_array('scheduled_date', $all_fields))
 	$db->run('ALTER TABLE `'.$blog_entries.'` ADD COLUMN `scheduled_date` BIGINT(11) NOT NULL DEFAULT 0');
 }
 
+if (in_array('category', $all_fields))
+{
+	// go thru entries, put in new category table
+	$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'`');
+	if (is_array($entries)) 
+	{
+		foreach ($entries as $entry)
+		{
+			$category_id = $entry['category'];
+			$post_id     = $entry['post_id'];
+
+			$db->run('INSERT INTO `'.$blog_category_links.'` (`post_id`, `category_id`) VALUES (?,?)',
+				$post_id, $category_id
+			);
+		}
+	}
+	$db->run('ALTER TABLE `'.$blog_entries.'` DROP COLUMN `category`');
+}
 // check blog categories table
 
 $fields = $db->assoc('SHOW COLUMNS FROM `'.$blog_categories.'`');
@@ -178,4 +204,6 @@ if (in_array('position', $all_fields))
 {
 	$db->run('ALTER TABLE `'.$blog_categories.'` DROP `position`');
 }
+
+
 ?>

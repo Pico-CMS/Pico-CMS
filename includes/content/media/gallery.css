@@ -3,6 +3,7 @@
 {
 	position: relative;
 	background: #003581;
+	display: inline-block;
 }
 
 .jscript_gallery .jscript_image
@@ -13,12 +14,11 @@
 .jscript_gallery .thumbnails
 {
 	position: absolute;
-	left: 0;
-	bottom: 0;
-	right: 0;
-	height: 64px;
+	left: 6px;
+	bottom: 6px;
+	right: 6px;
 	overflow: hidden;
-	padding: 0 15px;
+	padding: 0;
 }
 
 .jscript_gallery .thumbnails .previous,
@@ -31,6 +31,7 @@
 	color: #fff;
 	font-size: 15px;
 	top: 22px;
+	right: 22px;
 }
 
 .jscript_gallery .thumbnails .previous
@@ -45,10 +46,8 @@
 
 .jscript_gallery .thumbnails .thumbnail
 {
-	width: 80px;
-	border: 1px #fff solid;
-	margin: 6px 20px;
-	float: left;
+	margin-right: 6px;
+	display: inline-block;
 	cursor: pointer;
 }
 
@@ -111,4 +110,56 @@
 .jscript_gallery .arrow_next:hover
 {
 	border: 1px #fff solid;
+}
+
+.gallery_preview td.thumbnail
+{
+	padding: 0 5px;
+}
+
+div.project_gallery div.categories
+{
+	width: 150px;
+	float: left;
+}
+
+div.project_gallery div.categories ul
+{
+	margin: 0;
+	padding: 0;
+}
+
+div.project_gallery div.categories ul li
+{
+	margin-bottom: 5px;
+	list-style-type: none;
+}
+
+div.project_gallery div.gallery_content
+{
+	width: 600px;
+	float: left;
+}
+
+div.project_gallery div.gallery_content .left_pane
+{
+	width: 400px;
+	float: left;
+}
+
+div.project_gallery div.gallery_content .right_pane
+{
+	width: 175px;
+	float: right;
+}
+
+div.project_gallery div.gallery_content .right_pane p
+{
+	margin-top: 0;
+}
+
+div.project_gallery div.gallery_content div.nav
+{
+	padding: 10px;
+	text-align: center;
 }

@@ -966,7 +966,7 @@ function Pico_EditContent(obj, request_uri, page_id)
 {
 	var component_id = $(obj).getAttribute('component_id');
 	var instance_id  = $(obj).getAttribute('instance_id');
-	var target_url   = url('includes/ap_actions.php?ap_action=load_edit&component_id='+component_id+'&instance_id='+instance_id);
+	var target_url   = url('includes/ap_actions.php?ap_action=load_edit&component_id='+component_id+'&instance_id='+instance_id+'&page_id='+CURRENT_PAGE);
 	
 	var complete_func = function() {
 		Pico_PrepEdit();
@@ -1342,6 +1342,16 @@ function Pico_ReloadComponent(component_id)
 	Pico_ClearEditModes('none');
 	var target_url = url('includes/ap_actions.php?ap_action=reload_container&component_id='+component_id+'&page_id='+CURRENT_PAGE+'&ru='+urlencode(REQUEST_URI));
 	new Ajax.Updater('box_'+component_id, target_url);
+}
+
+function Pico_ReloadInstance(instance_id)
+{
+	// page
+	Pico_ClearEditModes('none');
+	var target_url = url('includes/ap_actions.php?ap_action=reload_container_by_instance&instance_id='+instance_id);
+
+	var container = $$('[instance_id="'+instance_id+'"]').first();
+	new Ajax.Updater(container, target_url);
 }
 
 function Pico_SaveCSS(form)

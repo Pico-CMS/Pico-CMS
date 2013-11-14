@@ -114,9 +114,8 @@ if (($_POST['submit_contact_form'] == $component_id) or ($current_page != 0))
 	// scroll the contact form into view
 	echo <<<HTML
 <script type="text/javascript">
-document.observe('dom:loaded', function()
-{
-	document.getElementById('contact_page_$component_id').scrollIntoView();
+document.observe("dom:loaded", function() {
+	new Effect.ScrollTo($('box_'+$component_id));
 });
 </script>
 HTML;

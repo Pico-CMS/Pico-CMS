@@ -8,7 +8,7 @@ require_once('core.php');
 $action = $_REQUEST['ap_action'];
 
 $actions = array(
-	'2' => array('reload_container', 'reload_column', 'get_scripts', 'load_edit', 'add_sh_item', 'sh_item_delete', 'sh_item_move', 'sh_hide_delete'),
+	'2' => array('reload_container_by_instance', 'reload_container', 'reload_column', 'get_scripts', 'load_edit', 'add_sh_item', 'sh_item_delete', 'sh_item_move', 'sh_hide_delete'),
 	'3' => array('move_content', 'delete_content', 'add_content', 'delete_user', 'edit_page', 'clone_page', 'add_page', 'check_page', 'add_user_profile',
 		'delete_group', 'edit_user', 'add_user', 'check_user', 'delete_page', 'delete_user_profile', 'add_profile_field', 'edit_profile_field', 'move_profile_field',
 		'delete_profile_field', 'export_profile_users', 'sh_unlink_delete', 'save_component_settings', 'activate_user'
@@ -217,6 +217,13 @@ if ($action == 'save_css')
 	
 	$result = $db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `css`=? WHERE `component_id`=? LIMIT 1', $css, $component_id);
 	if (!$result) { echo $db->error; }
+	exit();
+}
+
+if ($action == 'reload_container_by_instance')
+{
+	$instance_id = $_GET['instance_id'];
+	echo GetComponentByInstanceID($instance_id);
 	exit();
 }
 
@@ -821,18 +828,15 @@ if ($action == 'check_user')
 	exit();
 }
 
+if ( ($action == 'add_page') or ($action == 'edit_page') )
+{
+	Pico_CheckTableColumn(DB_PAGES_TABLE, 'disable_analytics', 'TINYINT (1) NOT NULL DEFAULT 0');
+}
+
 if ($action == 'edit_page')
 {
-	$p = $_POST['page'];
+	$p = Pico_Cleanse($_POST['page']);
 	$c = $_POST['current_page'];
-	
-	foreach ($p as $key=>$val)
-	{
-		if (is_string($val))
-		{
-			$p[$key] = stripslashes($val);
-		}
-	}
 	
 	$p['name'] = stripslashes($p['name']);
 	
@@ -848,8 +852,8 @@ if ($action == 'edit_page')
 		$g = null;
 	}
 	
-	$db->run('UPDATE `'.DB_PAGES_TABLE.'` SET `name`=?, `alias`=?, `theme`=?, `www_title`=?, `keywords`=?, `description`=?, `user_access`=?, `groups`=? WHERE `page_id`=?', 
-		$p['name'], $alias, $p['theme'], $p['www_title'], $p['keywords'], $p['description'], $p['user_access'], $g, $c);
+	$db->run('UPDATE `'.DB_PAGES_TABLE.'` SET `name`=?, `alias`=?, `theme`=?, `www_title`=?, `keywords`=?, `description`=?, `user_access`=?, `groups`=?, `disable_analytics`=? WHERE `page_id`=?', 
+		$p['name'], $alias, $p['theme'], $p['www_title'], $p['keywords'], $p['description'], $p['user_access'], $g, $p['disable_analytics'], $c);
 	
 	if ($p['is_default'] == 1)
 	{
@@ -857,7 +861,7 @@ if ($action == 'edit_page')
 		$db->run('UPDATE `'.DB_PAGES_TABLE.'` SET `is_default`=1 WHERE `page_id`=?', $c);
 	}
 	
-	echo $alias;
+	echo trim($alias);
 	exit();
 }
 
@@ -964,12 +968,14 @@ if ($action == 'add_page')
 	{
 		$g = null;
 	}
+
+	$disable_analytics = (is_numeric($p['disable_analytics'])) ? $p['disable_analytics'] : 0;
 	
-	$check = $db->run('INSERT INTO `'.DB_PAGES_TABLE.'` (`name`, `alias`, `theme`, `www_title`, `keywords`, `description`, `user_access`, `is_default`, `groups`) VALUES (?,?,?,?,?,?,?,?,?)', 
-		$p['name'], $alias, $p['theme'], $p['www_title'], $p['keywords'], $p['description'], $p['user_access'], $p['is_default'], $g
+	$check = $db->run('INSERT INTO `'.DB_PAGES_TABLE.'` (`name`, `alias`, `theme`, `www_title`, `keywords`, `description`, `user_access`, `is_default`, `groups`, `disable_analytics`) VALUES (?,?,?,?,?,?,?,?,?,?)', 
+		$p['name'], $alias, $p['theme'], $p['www_title'], $p['keywords'], $p['description'], $p['user_access'], $p['is_default'], $g, $disable_analytics
 	);
 	
-	echo $alias;
+	echo trim($alias);
 	exit();
 }
 if ($action == 'check_page')

@@ -1,7 +1,7 @@
 <?php
 chdir('../');
 require_once('core.php');
-if (USER_ACCESS < 4) { exit(); }
+if (USER_ACCESS < 3) { exit(); }
 
 $sh_table = DB_PREFIX . 'pico_site_heirarchy';
 

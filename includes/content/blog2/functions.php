@@ -2,9 +2,10 @@
 
 require_once('includes/content/blog2/layout.class.php');
 
-$blog_entries    = DB_PREFIX . 'pico_blog_entries';
-$blog_categories = DB_PREFIX . 'pico_blog_categories';
-$blog_comments   = DB_PREFIX . 'pico_blog_comments';
+$blog_entries        = DB_PREFIX . 'pico_blog_entries';
+$blog_categories     = DB_PREFIX . 'pico_blog_categories';
+$blog_comments       = DB_PREFIX . 'pico_blog_comments';
+$blog_category_links = DB_PREFIX . 'pico_blog_category_links';
 
 function Blog2_GetSettings($component_id)
 {
@@ -24,14 +25,15 @@ function Blog2_GetSettings($component_id)
 function Blog2_ShowEntry($entry, $layout, $page_alias, $comment_layout = '')
 {
 	global $body, $db;
-	$blog_categories = DB_PREFIX . 'pico_blog_categories';
-	$blog_entries    = DB_PREFIX . 'pico_blog_entries';
-	$blog_comments   = DB_PREFIX . 'pico_blog_comments';
+	$blog_entries        = DB_PREFIX . 'pico_blog_entries';
+	$blog_categories     = DB_PREFIX . 'pico_blog_categories';
+	$blog_comments       = DB_PREFIX . 'pico_blog_comments';
+	$blog_category_links = DB_PREFIX . 'pico_blog_category_links';
 
 	// get blog settings
 	$blog_settings = Blog2_GetSettings($entry['component_id']);
 	
-	$entry_id = $entry['post_id'];
+	$entry_id = abs($entry['post_id']);
 	
 	$layout_obj = new Layout($layout);
 	$layout_obj->AddVar('id', 'num'); #
@@ -48,26 +50,43 @@ function Blog2_ShowEntry($entry, $layout, $page_alias, $comment_layout = '')
 	$layout_obj->AddVar('link', 'link'); #
 	$layout_obj->AddVar('prev', 'link'); #
 	$layout_obj->AddVar('next', 'link'); #
-	$layout_obj->AddVar('category_link', 'link'); #
+	$layout_obj->AddVar('category_link', 'deprecated'); // was link, but making it text for backwards compatibility
 	$layout_obj->AddVar('secondary_title', 'text'); #
 	$layout_obj->AddVar('related', 'text'); #
 	$layout_obj->AddVar('author', 'text'); #
 	$layout_obj->AddVar('num_comments', 'num'); #
 	$layout_obj->AddVar('caption', 'text'); #
+	$layout_obj->AddVar('categories', 'text'); #
 	
-	// category ====================
+	// categories ====================
 	
-	if ($entry['category'] != 0)
+	$categories      = array();
+	$post_categories = $db->force_multi_assoc('SELECT * FROM `'.$blog_category_links.'` WHERE `post_id`=?', $entry_id);
+	$category_links  = array();
+	$category_text   = '';
+
+	if (is_array($post_categories))
 	{
-		$category_info = $db->assoc('SELECT * FROM `'.$blog_categories.'` WHERE `category_id`=?', $entry['category']); 
-		$category_name = $category_info['title'];
-		$category_link = $body->url($page_alias . '/category/' . $category_info['alias']);
+		foreach ($post_categories as $category)
+		{
+			$id   = $category['category_id'];
+			$name = $db->result('SELECT `title` FROM `'.$blog_categories.'` WHERE `category_id`=?', $id);
+
+			$categories[$id] = $name;
+		}	
+
+		natcasesort($categories);
+
+		foreach ($categories as $id => $name)
+		{
+			$cat_alias = $db->result('SELECT `alias` FROM `'.$blog_categories.'` WHERE `category_id`=?', $id);
+			$link = '<a class="category_link" href="'.$body->url($page_alias . '/category/' . $cat_alias).'">'.$name.'</a>';
+			$category_links[] = $link;
+		}
+
+		$category_text = implode(', ', $category_links);
 	}
-	else
-	{
-		$category_name = 'Uncategorized';
-		$category_link = $body->url($page_alias . '/category/uncategorized');
-	}
+	
 	
 	// image ====================
 	
@@ -98,7 +117,7 @@ function Blog2_ShowEntry($entry, $layout, $page_alias, $comment_layout = '')
 			$tag = trim($tag);
 			if (strlen($tag) > 0)
 			{
-				$tag_data[] = '<a href="'.$body->url($page_alias . '/tag/'. $tag).'">'.$tag.'</a>';
+				$tag_data[] = '<a href="'.$body->url($page_alias . '/tag/'. PageNameToAlias($tag)).'">'.$tag.'</a>';
 				$tag_list .= $tag.', ';
 			}
 		}
@@ -107,8 +126,9 @@ function Blog2_ShowEntry($entry, $layout, $page_alias, $comment_layout = '')
 	
 	$entry['story']         = $entry['post']; // fixes for layout
 	$entry['id']            = $entry_id; 
-	$entry['category_name'] = $category_name; 
-	$entry['category_link'] = $category_link; 
+	$entry['category_name'] = ''; // deprecated 
+	$entry['category_link'] = $category_text; // deprecated 
+	$entry['categories']    = $category_text;
 	$entry['tags']          = $tag_string; 
 	$entry['link']          = $body->url($page_alias . '/' . $entry['alias']);
 	$entry['num_tags']      = sizeof($tag_data);
@@ -151,7 +171,18 @@ HTML;
 			$related_info = $db->assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id`=?', $_id);
 			if (($related_info['published'] == 1) and (time() > $related_info['scheduled_date']))
 			{
-				$related[] = '<a href="'.$body->url($page_alias . '/' . $related_info['alias']).'">'.$related_info['title'].'</a>';
+				$related_img = '';
+				$file        = $related_info['story_image'];
+				$full_image  = 'includes/storage/blog/images/'.$related_info['post_id'].'/'.$file;
+		
+				if (is_file($full_image))
+				{
+					$layout_obj->AddVar('related_image_'.$x, 'image'); 
+					$entry['related_image_'.$x] = $full_image;
+					$related_img = '<span class="related_img">{RELATED_IMAGE_'.$x.',48,36}</span>';
+				}
+
+				$related[] = $related_img . '<a href="'.$body->url($page_alias . '/' . $related_info['alias']).'">'.$related_info['title'].'</a>';
 			}
 		}
 	}
@@ -452,7 +483,7 @@ function Blog2_FindPostsByTag($component_id, $tag)
 				{
 					$val = str_replace('#', '', $val);
 					$val = PageNameToAlias($val);
-					$tags[$key] = strtolower($val);
+					$tags[$key] = trim(strtolower($val));
 				}
 			}
 			if (in_array($tag, $tags)) { $entries[] = $entry; }
@@ -466,8 +497,21 @@ function Blog2_FindPostsByCategory($component_id, $category_id)
 {
 	global $db;
 	$blog_entries = DB_PREFIX . 'pico_blog_entries';
+	$blog_category_links = DB_PREFIX . 'pico_blog_category_links';
 
-	$entries = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `category`=? AND `component_id`=? AND `published`=1 AND `scheduled_date` < ?' . Blog2_GetSettingsSort($component_id, 'categories'), $category_id, $component_id, time());
+	$entries  = array();
+	$post_ids = $db->force_multi_assoc('SELECT * FROM `'.$blog_category_links.'` WHERE `category_id`=?', $category_id);
+
+	if (is_array($post_ids))
+	{
+		foreach ($post_ids as $p)
+		{
+			$post_id = $p['post_id'];
+			$entry = $db->assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id`=? AND `published`=1 AND `scheduled_date` < ?' . Blog2_GetSettingsSort($component_id, 'categories'), $post_id, time());
+			if (is_array($entry)) { $entries[] = $entry; }
+		}
+	}
+	
 	return $entries;
 }
 
@@ -632,6 +676,12 @@ function Blog2_LayoutSection($section_name, $sel = '')
 	$dropdown = '<select name="settings[section_layout]['.$section_name.']">';
 	$dropdown .= '<option value="full" '.(($sel == 'full') ? 'selected="selected"' : '').'>Full</option>';
 	$dropdown .= '<option value="short" '.(($sel == 'short') ? 'selected="selected"' : '').'>Short</option>';
+
+	if ($section_name == 'yearly') 
+	{
+		$dropdown .= '<option value="month" '.(($sel == 'month') ? 'selected="selected"' : '').'>Month</option>';
+	}
+	
 	$dropdown .= '</select>';
 	return $dropdown;
 }
@@ -653,7 +703,7 @@ function Blog2_GetPostsDropdown($component_id, $name, $sel = 0)
 	$blog_entries = DB_PREFIX . 'pico_blog_entries';
 	$entries      = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `published`=? ORDER BY `date` DESC', $component_id, 1);
 	
-	$dropdown .= '<select name="'.$name.'" style="width: 400px"><option value="0"></option>';
+	$dropdown .= '<select name="'.$name.'" style="width: 350px"><option value="0"></option>';
 	if (is_array($entries))
 	{
 		foreach ($entries as $entry)
@@ -923,16 +973,14 @@ function Blog2_GetLayoutDescHTML()
 		<div class="variable_tooltip">Sub-title of the post</div></li>
 	<li>{LINK,linked text}
 		<div class="variable_tooltip">Link to an individual post, displayed as "linked text"<br />ex: {LINK,{TITLE}} or {LINK,Read More}</div></li>
-	<li>{STORY,num words}
+	<li>{STORY[,num words]}
 		<div class="variable_tooltip">Main post text, with optional number of words</div></li>
 	<li>{DATE[,flags]}
 		<div class="variable_tooltip">Shows the post date, with optional flags to specify how the date should be formatted</div></li>
 	<li>{ID}
 		<div class="variable_tooltip">Internal Post ID</div></li>
-	<li>{CATEGORY_LINK,linked text}
-		<div class="variable_tooltip">Category link, displayed as "linked text"<br />ex: {LINK,{CATEGORY_NAME}}</div></li>
-	<li>{CATEGORY_NAME}
-		<div class="variable_tooltip">Category Name</div></li>
+	<li>{CATEGORIES}
+		<div class="variable_tooltip">A list-link of all the categories this post is in</div></li>
 	<li>{TAGS}
 		<div class="variable_tooltip">Tag link list</div></li>
 	<li>{NUM_TAGS}
@@ -962,5 +1010,21 @@ function Blog2_GetLayoutDescHTML()
 		<div class="variable_tooltip">Image Caption</div></li>
 </ul>
 HTML;
+}
+
+function Blog2_PointSort($a, $b)
+{
+	if ($a['pts'] < $b['pts'])
+	{
+		return 1;
+	}
+	elseif ($a['pts'] > $b['pts'])
+	{
+		return -1;
+	}
+	else
+	{
+		return 0;
+	}
 }
 ?>

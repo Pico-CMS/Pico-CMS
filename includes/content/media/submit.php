@@ -28,11 +28,11 @@ if ($action == 'add')
 	$instance_id  = $_GET['instance_id'];
 	$component_id = $_GET['component_id'];
 	$category_id  = $_GET['category_id'];
-	$source_file  = 'includes/content/media/upload/' . urldecode($_GET['filename']);
+	$source_file  = 'includes/tmp/' . urldecode($_GET['filename']);
 	
 	// get new position
 	
-	if (file_exists($source_file))
+	if ((file_exists($source_file)) and (Pico_StorageDir('includes/storage/media/source/')))
 	{
 		$gallery_config = gallery_get_base_options($component_id);
 		if ($gallery_config['categories'] == TRUE)
@@ -44,111 +44,20 @@ if ($action == 'add')
 			$check = $db->result('SELECT `position` FROM `'.$media_files.'` WHERE `instance_id`=? ORDER BY `position` DESC LIMIT 1', $instance_id);
 		}
 		
-		$position = ($check === FALSE) ? 0 : $check+1;
-		$ext      = file_extension($source_file);
-		
+		$position     = ($check === FALSE) ? 0 : $check+1;
+		$ext          = file_extension($source_file);
 		$new_image_id = $db->insert('INSERT INTO `'.$media_files.'` (`instance_id`, `position`, `extension`, `category_id`) VALUES (?,?,?,?)', $instance_id, $position, $ext, $category_id);
 		
 		if ($new_image_id === FALSE) { exit(); }
 		
 		// images get converted to JPGs when they are uploaded
 		
-		$new_source_image = 'includes/content/media/files/'.$new_image_id.'.'.$ext;
+		$new_source_image = 'includes/storage/media/source/'.$new_image_id.'.'.$ext;
 		rename($source_file, $new_source_image);
-		
-		// make a thumbnail
-		
-		$thumbnail_image = 'includes/content/media/files/'.$new_image_id.'_thumb.'.$ext;
-		make_new_image($new_source_image, $thumbnail_image, 100, 100);
-		
-		// make a resized image for this gallery type, and thumbnail if needed
-		
-		$data = $db->result('SELECT `additional_info` FROM `'.DB_COMPONENT_TABLE.'` WHERE `component_id`=?', $component_id);
-		if ($data === FALSE) { exit('Invalid query: ' . $db->error); }
-		$gallery_options = unserialize($data);
-		
-		$options = gallery_get_settings($component_id);
-		
-		$sized_file     = 'includes/content/media/galleries/'.$gallery_options['gallery_style'].'/files/' . $new_image_id .'.jpg';
-		$sized_file_png = 'includes/content/media/galleries/'.$gallery_options['gallery_style'].'/files/' . $new_image_id .'.png';
-		$thumb_file     = 'includes/content/media/galleries/'.$gallery_options['gallery_style'].'/files/' . $new_image_id .'_thumb.jpg';
-		
-		if ( ($options['img_width'] != 0) and ($options['img_height'] != 0) )
-		{
-			if ($gallery_options['imageUploadMode'] == 'pad')
-			{
-				make_new_image_ws($new_source_image, $sized_file_png, $options['img_width'], $options['img_height']);
-			}
-			else
-			{
-				make_new_image($new_source_image, $sized_file, $options['img_width'], $options['img_height']);
-			}
-		}
-		elseif ( ($options['img_width'] != 0) and ($options['img_height'] == 0) )
-		{
-			// scale by width
-			make_resized_image($new_source_image, $sized_file, $options['img_width'], 0);
-		}
-		elseif ( ($options['img_width'] == 0) and ($options['img_height'] != 0) )
-		{
-			// scale by height
-			make_resized_image($new_source_image, $sized_file, 0, $options['img_height']);
-		}
-		else
-		{
-			// just copy
-			copy($new_source_image, $sized_file);
-		}
-		
-		if ( ($options['thumb_width'] != 0) and ($options['thumb_height'] != 0) )
-		{
-			make_new_image($new_source_image, $thumb_file, $options['thumb_width'], $options['thumb_height']);
-		}
 	}
 	else
 	{
-		echo 'No source file: ' . $source_file;
-	}
-	exit();
-}
-
-if ($action == 'move')
-{
-	$image_id    = $_GET['image_id'];
-	$direction   = $_GET['direction'];
-	$instance_id = $_GET['instance_id'];
-	// get current position
-	
-	$current_position = (int) $db->result('SELECT `position` FROM `'.$media_files.'` WHERE `file_id`=?', $image_id);
-	$category_id = (int) $db->result('SELECT `category_id` FROM `'.$media_files.'` WHERE `file_id`=?', $image_id);
-	
-	if ($direction == 'up')
-	{
-		if ($current_position != 0)
-		{
-			$new_position = $current_position - 1;
-			$move_id = $db->result('SELECT `file_id` FROM `'.$media_files.'` WHERE `position`=? AND `instance_id`=? AND `category_id`=?', $new_position, $instance_id, $category_id);
-			if ($move_id !== FALSE)
-			{
-				$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', $new_position, $image_id);
-				$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', $current_position, $move_id);
-			}
-		}
-	}
-	else
-	{
-		// see if it's a valid position
-		$new_position = $current_position + 1;
-		$move_id = $db->result('SELECT `file_id` FROM `'.$media_files.'` WHERE `position`=? AND `instance_id`=? AND `category_id`=?', $new_position, $instance_id, $category_id);
-		if ($move_id !== FALSE)
-		{
-			$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', $new_position, $image_id);
-			$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', $current_position, $move_id);
-		}
-		else
-		{
-			echo $db->query;
-		}
+		echo 'File not uploaded: ' . basename($source_file);
 	}
 	exit();
 }
@@ -391,5 +300,84 @@ if ($action == 'top_file')
 	$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', 0, $file_id);
 }
 
+if ($action == 'set_order')
+{
+	$component_id = $_GET['instance_id'];
+	$file_id      = $_GET['component_id'];
+	$order        = $_GET['order'];
 
+	$count = $db->result('SELECT count(1) FROM `'.$media_files.'` WHERE `category_id`=? AND `instance_id`=?', $category_id, $instance_id);
+	$order = explode(',', $order); 
+	if ((!is_array($order)) or (sizeof($order) == 0)) { exit(); }
+
+	$all_check = 0;
+	foreach ($order as $file_id)
+	{
+		$check = $db->result('SELECT count(1) FROM `'.$media_files.'` WHERE `category_id`=? AND `instance_id`=? AND `file_id`=?', $category_id, $instance_id, $file_id);
+		$all_check += $check;
+	}
+
+	// we use the above checks to make sure count == all_check, if it does we will re-order the files, else that means the form has changed and we error
+
+	if ($all_check == $count)
+	{
+		for ($x = 0; $x < sizeof($order); $x++)
+		{
+			$file_id = $order[$x];
+			$db->run('UPDATE `'.$media_files.'` SET `position`=? WHERE `file_id`=?', $x, $file_id);
+		}
+	}
+	else
+	{
+		echo 'Unable to save file order.';
+	}
+}
+
+if ($action == 'change')
+{
+	$field    = $_GET['field'];
+	$entry_id = $_GET['id'];
+	$value    = stripslashes(urldecode($_GET['value']));
+
+	$db->run('UPDATE `'.$media_files.'` SET `'.$field.'`=? WHERE `file_id`=?',
+		$value, $entry_id
+	);
+}
+
+if ($action == 'edit_desc')
+{
+	$file_id = $_GET['file_id'];
+	$file_info = $db->assoc('SELECT * FROM `'.$media_files.'` WHERE `file_id`=?', $file_id);
+	$desc = htmlspecialchars($file_info['description']);
+	$url  = $body->url('includes/content/media/submit.php');
+
+	echo <<<HTML
+<form method="post" action="$url" id="mg_desc_form" style="height: auto">
+<input type="hidden" name="page_action" value="save_description" />
+<input type="hidden" name="file_id" value="$file_id" />
+<textarea class="mg_edit_desc" name="mg_description" id="mg_description">$desc</textarea>
+</form>
+<div class="clear"></div>
+
+<button class="mg_close_desc one" onclick="MG_CloseDescription(0)">Save</button>
+<button class="mg_close_desc two" onclick="MG_CloseDescription(1)">Save &amp; Close</button>
+<button class="mg_close_desc three" onclick="MG_CloseDescription(2)">Cancel</button>
+HTML;
+}
+
+if ($action == 'save_description')
+{
+	$post = Pico_Cleanse($_POST);
+	$db->run('ALTER TABLE `'.$media_files.'` CHANGE  `description` `description` TEXT');
+	$db->run('UPDATE `'.$media_files.'` SET `description`=? WHERE `file_id`=?', $post['mg_description'], $post['file_id']);
+
+	echo strip_tags($post['mg_description']);
+}
+
+if ($action == 'update_category_html')
+{
+	Pico_CheckTable($media_categories, 'html', 'TEXT');
+	$post = Pico_Cleanse($_POST);
+	$db->run('UPDATE `'.$media_categories.'` SET `html`=? WHERE `category_id`=?', $post['html'], $post['category_id']);
+}
 ?>

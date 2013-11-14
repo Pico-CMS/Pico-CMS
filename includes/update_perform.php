@@ -332,17 +332,21 @@ function Pico_UpdateCoreFiles($ftp)
 					exit('Parent folder does not exist: ' . $parent_folder);
 				}
 				
-				if (!is_writable($parent_folder))
+				// in theory, we should always be able to write to the root folder, so let's not check this
+				if (($parent_folder != '.') and ($parent_folder != './'))
 				{
-					$perms = file_perms($parent_folder);
-					$original_perms[$parent_folder] = $perms; // reset for later
-					@$ftp->chmod($parent_folder, 0777);
-				}
-				
-				if (!is_writable($parent_folder))
-				{
-					ResetPerms($ftp, $original_perms);
-					exit('Unable to write to folder: ' . $parent_folder . '('.$filename.')');
+					if (!is_writable($parent_folder))
+					{
+						$perms = file_perms($parent_folder);
+						$original_perms[$parent_folder] = $perms; // reset for later
+						@$ftp->chmod($parent_folder, 0777);
+					}
+					
+					if (!is_writable($parent_folder))
+					{
+						ResetPerms($ftp, $original_perms);
+						exit('Unable to write to folder: ' . $parent_folder . '('.$filename.')');
+					}
 				}
 				
 				if ( (($action == 'edit') or ($action == 'add')) and (is_file($filename)) )

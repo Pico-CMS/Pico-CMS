@@ -7,32 +7,80 @@ require_once('includes/content/blog2/functions.php');
 
 $action = $_REQUEST['page_action'];
 
-if ($action == 'blog_settings')
+if ($action == 'get_categories')
 {
-	/*
-	$component_id = $_POST['component_id'];
-	$layout       = stripslashes($_POST['layout']);
-	$f_layout     = stripslashes($_POST['full_layout']);
-	$c_layout     = stripslashes($_POST['comment_layout']);
-	$num_entries  = (is_numeric($_POST['num_entries'])) ? $_POST['num_entries'] : 3;
-	
-	$show_short_layout = $_POST['show_short_layout'];
-	if (!is_array($show_short_layout)) { $show_short_layout = array(); }
-	
-	$image_settings = serialize($_POST['image_settings']);
-	
-	$count = $db->result('SELECT count(1) FROM `'.$blog_options.'` WHERE `component_id`=?', $component_id);
-	if ((int) $count === 0)
+	$component_id = $_GET['component_id'];
+	$form_url     = $body->url('includes/content/blog2/submit.php');
+
+	$categories = $db->force_multi_assoc('SELECT * FROM `'.$blog_categories.'` WHERE `component_id`=? ORDER BY `title` ASC', $component_id);
+	$cat_html   = array();
+
+	$counter = 0;
+
+	$cat_drop = '<option value="">...</option>';
+
+	if (is_array($categories))
 	{
-		$result = $db->run('INSERT INTO `'.$blog_options.'` (`component_id`, `allow_comments`, `show_rss`, `moderator_address`, `hide_expired`, `layout`, `comment_layout`, `full_layout`, `num_entries`, `show_short_layout`, `show_bottom_nav`, `image_settings`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)',
-			$component_id, $_POST['allow_comments'], $_POST['show_rss'], $_POST['moderator_address'], $_POST['hide_expired'], $layout, $c_layout, $f_layout, $num_entries, serialize($show_short_layout), $_POST['show_bottom_nav'], $image_settings);
+		foreach ($categories as $category)
+		{
+			$class = ($counter % 2 == 0) ? 'a' : 'b';
+			$counter++;
+			$cat_html[] = '<div class="entry '.$class.'" category_id="'.$category['category_id'].'" onclick="Blog2_SelectCategory(this)">'.$category['title'].'</div>';
+
+			$cat_drop .= '<option value="'.$category['category_id'].'">'.$category['title'].'</option>';
+		}
+	}
+
+	if (sizeof($cat_html) > 22)
+	{
+		// we will need to split
+		$half = ceil(sizeof($cat_html) / 2);
+		if ($half < 22) { $half = 22; }
+
+		$col1 = implode('', array_slice($cat_html, 0, $half));
+		$col2 = implode('', array_slice($cat_html, $half));
 	}
 	else
 	{
-		$result = $db->run('UPDATE `'.$blog_options.'` SET `allow_comments`=?, `show_rss`=?, `moderator_address`=?, `layout`=?, `comment_layout`=?, `hide_expired`=?, `full_layout`=?, `num_entries`=?, `show_short_layout`=?, `show_bottom_nav`=?, `image_settings`=? WHERE `component_id`=?', 
-			$_POST['allow_comments'], $_POST['show_rss'], $_POST['moderator_address'], $layout, $c_layout, $_POST['hide_expired'], $f_layout, $num_entries, serialize($show_short_layout), $_POST['show_bottom_nav'], $image_settings, $component_id);
-	}*/
+		$col1 = implode('', $cat_html);
+		$col2 = '';
+	}
+
+	echo <<<HTML
+<div class="col center">
+	<h3>Add New Category</h3>
+	<input type="text" name="category" id="new_category" value="" /><br />
+	<button onclick="Blog2_AddNewCategory($component_id)">Add</button>
+
+	<hr />
+
+	<h3>Rename Category</h3>
+	<select name="category" id="rename_category_id" onchange="Blog2_LoadRename(this)">$cat_drop</select><br />
+	<input type="text" name="rename_category" id="rename_category" value="" /><br />
 	
+	<button onclick="Blog2_RenameCategory($component_id)">Rename</button>
+
+	<hr />
+
+	<h3>Delete Category</h3>
+	<select id="delete_category_id" name="category">$cat_drop</select><br />
+	<button onclick="Blog2_DeleteCategory($component_id)">Delete</button>
+
+	<div style="margin-top: 50px;">
+	<button onclick="Blog2_CloseCategories()">Close</button>
+	</div>
+</div>
+<div class="col">$col1</div>
+<div class="col">$col2</div>
+<div class="clear"></div>
+
+HTML;
+
+	exit();
+}
+
+if ($action == 'blog_settings')
+{
 	$component_id = $_POST['component_id'];
 	$settings     = Pico_Cleanse($_POST['settings']);
 	$db->run('UPDATE `'.DB_COMPONENT_TABLE.'` SET `additional_info`=? WHERE `component_id`=?', serialize($settings), $component_id);
@@ -48,7 +96,6 @@ if ($action == 'start_post')
 	
 	if ($check > 0)
 	{
-		//if ($check === FALSE) { echo $db->error; exit(); }
 		exit('1|That title is already in use, please change your title and try again');
 	}
 	elseif (strlen($title) == 0)
@@ -60,9 +107,15 @@ if ($action == 'start_post')
 		$date_ts = strtotime($date);
 		$alias   = PageNameToAlias($title);
 		
-		$new_story = $db->insert('INSERT INTO `'.$blog_entries.'` (`component_id`, `date`, `title`, `tags`, `post`, `category`, `alias`, `published`) VALUES (?,?,?,?,?,?,?,?)', 
-			$component_id, $date_ts, $title, '', '', 0, $alias, 0
+		$new_story = $db->insert('INSERT INTO `'.$blog_entries.'` (`component_id`, `date`, `title`, `tags`, `post`, `alias`, `published`) VALUES (?,?,?,?,?,?,?)', 
+			$component_id, $date_ts, $title, '', '', $alias, 0
 		);
+
+		if (!is_numeric($new_story)) {
+			echo '1|Error adding blog post: ' . $db->error;
+			exit();
+		}
+		
 		exit('0|'.$new_story);
 	}
 }
@@ -84,10 +137,10 @@ elseif ($action == 'draft')
 			$blog_entry_text, time(), $entry_id
 		);
 		
-		echo 'Autosaved... ' . date('h:ia');
+		echo 'Post Autosaved';
 	}
 }
-elseif ( ($action == 'edit_story') or ($action == 'publish') )
+elseif ( ($action == 'edit_story') or ($action == 'publish') or ($action == 'preview' ) )
 {
 	$component_id   = $_POST['component_id'];
 	$date           = Blog2_TimeStampFromHTML($_POST['date']);
@@ -103,8 +156,19 @@ elseif ( ($action == 'edit_story') or ($action == 'publish') )
 	$related1       = $_POST['related1'];
 	$related2       = $_POST['related2'];
 	$related3       = $_POST['related3'];
-	
-	if ($action == 'publish')
+
+	if ($action == 'preview') 
+	{ 
+		$story_image = $db->result('SELECT `story_image` FROM `'.$blog_entries.'` WHERE `post_id`=?', $entry_id);
+		$entry_id  = -1 * $entry_id; 
+		$published = 0;
+
+		$db->run('DELETE FROM `'.$blog_entries.'` WHERE `post_id` < ?', 0);
+		$db->run('INSERT INTO `'.$blog_entries.'` (`post_id`, `story_image`, `component_id`, `date`, `title`, `tags`, `post`, `alias`, `published`) VALUES (?,?,?,?,?,?,?,?,?)', 
+			$entry_id, $story_image, $component_id, time(), $title, '', '', '', 1
+		);
+	}
+	elseif ($action == 'publish')
 	{
 		$published = 1;
 	}
@@ -128,12 +192,33 @@ elseif ( ($action == 'edit_story') or ($action == 'publish') )
 	
 	$allow_comments  = (isset($_POST['allow_comments'])) ? $_POST['allow_comments'] : 0;
 	
-	$update_story = $db->run('UPDATE `'.$blog_entries.'` SET `date`=?, `scheduled_date`=?, `saved_date`=?, `tags`=?, `post`=?, `category`=?, `published`=?, `allow_comments`=?, `last_saved_post`=?, `last_saved_date`=?, `author`=?, `by_line`=?, `image_caption`=?, `related1`=?, `related2`=?, `related3`=? WHERE `post_id`=?',
-		$date, $scheduled_date, time(), $tags, $story, $_POST['category'], $published, $allow_comments, $last_saved_post, $last_saved_date, $author, $by_line, $caption, $related1, $related2, $related3, $entry_id
+	$update_story = $db->run('UPDATE `'.$blog_entries.'` SET `date`=?, `scheduled_date`=?, `saved_date`=?, `tags`=?, `post`=?, `published`=?, `allow_comments`=?, `last_saved_post`=?, `last_saved_date`=?, `author`=?, `by_line`=?, `image_caption`=?, `related1`=?, `related2`=?, `related3`=? WHERE `post_id`=?',
+		$date, $scheduled_date, time(), $tags, $story, $published, $allow_comments, $last_saved_post, $last_saved_date, $author, $by_line, $caption, $related1, $related2, $related3, $entry_id
 	);
+
+	// update categories
+
+	$categories = trim($_POST['categories'], ', ');
+	$category_ids = explode(',', $categories);
+
+	$db->run('DELETE FROM `'.$blog_category_links.'` WHERE `post_id`=?', $entry_id);
+
+	if (sizeof($category_ids) > 0)
+	{
+		foreach ($category_ids as $category_id)
+		{
+			$check = $db->result('SELECT count(1) FROM `'.$blog_categories.'` WHERE `category_id`=?', $category_id);
+
+			if ($check != 0)
+			{
+				$db->run('INSERT INTO `'.$blog_category_links.'` (`post_id`, `category_id`) VALUES (?,?)',
+					$entry_id, $category_id
+				);
+			}
+		}
+	}
 	
 	// change title (if needed)
-	
 	
 	if ($current_info['title'] != $title)
 	{
@@ -168,12 +253,12 @@ if ($action == 'delete_entry')
 
 if ($action == 'add_category')
 {
-	$component_id = $_GET['component_id'];
+	$component_id = $_REQUEST['component_id'];
 	
-	$title = stripslashes($_GET['category']);
+	$title = stripslashes($_REQUEST['category']);
 	$alias = PageNameToAlias($title);
 	
-	$check = $db->result('SELECT count(1) FROM `'.$blog_categories.'` WHERE `alias`=?', $alias);
+	$check = $db->result('SELECT count(1) FROM `'.$blog_categories.'` WHERE `alias`=? AND `component_id`=?', $alias, $component_id);
 	if ($check == 1)
 	{
 		echo 'That category already exists';
@@ -233,7 +318,7 @@ if ($action == 'delete_category')
 	$component_id = $db->result('SELECT `component_id` FROM `'.$blog_categories.'` WHERE `category_id`=?', $category_id);
 	
 	$db->run('DELETE FROM `'.$blog_categories.'` WHERE `category_id`=?', $category_id);
-	$db->run('UPDATE `'.$blog_entries.'` SET `category`=0 WHERE `category`=?', $category_id);
+	$db->run('DELETE FROM `'.$blog_category_links.'` WHERE `category_id`=?', $category_id);
 	exit();
 }
 
@@ -303,8 +388,9 @@ if ($action == 'load_layout')
 <h2>{LINK,{TITLE}}</h2>
 <div class="date">{DATE,F j, Y}</div>
 <div class="post">{STORY}</div>
-<div class="info">Posted in: {CATEGORY_LINK,{CATEGORY_NAME}}{if:NUM_TAGS > 0} - Tagged ({NUM_TAGS}): {TAGS}{/if}</div>
-<p>{SHARETHIS}</p>
+<div class="info">Posted in: {CATEGORIES}{if:NUM_TAGS > 0} - Tagged ({NUM_TAGS}): {TAGS}{/if}</div>
+{if:RELATED}<div class="related">Related Posts: {RELATED}</div>{/if}
+{if:SHARETHIS}<p>{SHARETHIS}</p>{/if}
 {if:COMMENTS_ENABLED}{COMMENTS}{/if}
 HTML;
 	}
@@ -312,7 +398,7 @@ HTML;
 	{
 		$output = <<<HTML
 <h2>{LINK,{TITLE}}</h2>
-{if:IMAGE}<div class="image">{IMAGE,320,240,pad}</div>{/if}
+{if:IMAGE}<div class="image">{IMAGE,240,180,pad}</div>{/if}
 <div class="date">{DATE,F j, Y}</div>
 <div class="post">{STORY,25}</div>
 <div class="info">Posted in: {CATEGORY_LINK,{CATEGORY_NAME}}{if:NUM_TAGS > 0} - Tagged ({NUM_TAGS}): {TAGS}{/if}</div>
@@ -329,6 +415,79 @@ HTML;
 	}
 	
 	echo $output;
+}
+
+if ($action == 'suggest')
+{
+	$entry_id = $_GET['entry_id'];
+	$result   = $_GET['result'];
+
+	$points_per_tag  = 1;
+	$points_per_word = 1;
+	$points_per_cat  = 5;
+
+	$points = array();
+
+	$entry_info  = $db->assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id`=?', $entry_id);
+	$entry_words = explode(' ', strtolower(trim($entry_info['title'])));
+	$entry_tags  = unserialize($entry_info['tags']);
+	// go through all the other posts
+
+	$other_posts = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `post_id` !=? AND `component_id`=? AND `published`=1', $entry_id, $entry_info['component_id']);
+	if (is_array($other_posts))
+	{
+		foreach($other_posts as $post)
+		{
+			$pt_counter = 0;
+			$id = $post['post_id'];
+
+			// get word points
+			$post_words = explode(' ', strtolower(trim($post['title'])));
+			if (is_array($post_words))
+			{
+				foreach ($post_words as $word)
+				{
+					if (in_array($word, $entry_words)) { $pt_counter += $points_per_word; }
+				}
+			}
+			
+			// get category points
+			if ($post['category'] == $entry_info['category']) { $pt_counter += $points_per_cat; }
+
+			// get tag points
+			$post_tags = unserialize($post['tags']);
+			if (is_array($post_tags))
+			{
+				foreach ($post_tags as $tag)
+				{
+					if (in_array($tag, $entry_tags)) { $pt_counter += $points_per_tag; }
+				}
+			}
+
+			if ($pt_counter > 0)
+			{
+				$points[] = array(
+					'id'  => $id,
+					'pts' => $pt_counter
+				);
+			}
+			
+		}
+	}
+
+	usort($points, 'Blog2_PointSort');
+
+	if (isset($points[$result-1]))
+	{
+		echo $points[$result-1]['id'];
+	}
+
+	exit();
+}
+
+if ($action == 'preview')
+{
+
 }
 
 ?>

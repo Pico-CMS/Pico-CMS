@@ -1,6 +1,17 @@
 
+var Blog2_AutoUpdater;
+
+function Blog2_StopUpdater()
+{
+	if (typeof(Blog2_AutoUpdater) == 'object')
+	{
+		Blog2_AutoUpdater.stop();
+	}
+}
+
 function Blog2_Home()
 {
+	Blog2_StopUpdater();
 	var component_id = document.getElementById('component_id').value;
 	
 	var obj = document.getElementById('co_main');
@@ -34,25 +45,39 @@ function Blog2_UpdateLastSaves(entry_id)
 	} });
 }
 
-function Blog2_Save()
+function Blog2_Status(txt)
+{
+	var obj = document.getElementById('blog_status');
+	obj.innerHTML = txt;
+
+	var func = function() {
+		obj.innerHTML = '';
+	}
+
+	setTimeout(func, 3000);
+}
+
+
+function Blog2_Save(publish)
 {
 	var form = document.getElementById('blog_content_form');
 	var component_id = form.elements.component_id.value;
 	form.elements.blog_entry_text.value = CKEDITOR.instances.blog_story.getData();
+
+	if (publish == 1) { form.elements.published.checked = true; }
+
 	new Ajax.Form(form, { onComplete: function(t) {
 		Pico_ReloadComponent(component_id);
-		var obj = document.getElementById('blog_status');
-		obj.innerHTML = t.responseText;
-		var obj2 = document.getElementById('blog_status2');
-		obj2.innerHTML = t.responseText;
-		
-		var func = function() {
-			obj.innerHTML = '';
-			obj2.innerHTML = '';
+
+		if (publish == 1) 
+		{ 
+			Pico_CloseAP();
+		}
+		else 
+		{
+			Blog2_Status(t.responseText);
 			Blog2_UpdateLastSaves(form.elements.entry_id.value);
 		}
-		setTimeout(func, 5000);
-		form.elements.page_action.value = 'edit_story';
 	} } );
 }
 
@@ -68,23 +93,35 @@ function Blog2_AutoSave()
 	var form = document.getElementById('blog_content_form');
 	if (form)
 	{
-		form.elements.page_action.value = 'draft';
-		form.elements.blog_entry_text.value = CKEDITOR.instances.blog_story.getData();
-		new Ajax.Form(form, { onComplete: function(t) {
-			var obj = document.getElementById('blog_status');
-			obj.innerHTML = t.responseText;
-			var func = function() {
-				obj.innerHTML = '';
+		var f = document.createElement("form");
+		f.setAttribute('method',"post");
+		f.setAttribute('action',url('includes/content/blog2/submit.php'));
+
+		var i = document.createElement("input"); //input element, text
+		i.setAttribute('type',"hidden");
+		i.setAttribute('name',"page_action");
+		i.value = 'draft';
+		f.appendChild(i);
+
+		var i = document.createElement("input"); //input element, text
+		i.setAttribute('type',"hidden");
+		i.setAttribute('name',"blog_entry_text");
+		i.value = CKEDITOR.instances.blog_story.getData();
+		f.appendChild(i);
+
+		var i = document.createElement("input"); //input element, text
+		i.setAttribute('type',"hidden");
+		i.setAttribute('name',"entry_id");
+		i.value = form.elements.entry_id.value
+		f.appendChild(i);
+
+		new Ajax.Form(f, { onComplete: function(t) {
+			if (t.responseText.length > 0)
+			{
+				Blog2_Status(t.responseText);
 				Blog2_UpdateLastSaves(form.elements.entry_id.value);
 			}
-			setTimeout(func, 5000);
-			
-			var func2 = function() {
-				Blog2_AutoSave()
-			}
-			setTimeout(func2, 30000);
-		} } );
-		form.elements.page_action.value = 'edit_story';
+		}});
 	}
 }
 
@@ -102,6 +139,9 @@ function Blog2_Close()
 	{
 		CKEDITOR.instances.last_auto_saved_post.destroy();
 	}
+
+	$('component_options').setStyle({'display' : 'block'});
+	Blog2_StopUpdater();
 }
 
 function Blog2_NewStory(form)
@@ -125,8 +165,21 @@ function Blog2_NewStory(form)
 	} });
 }
 
-function Blog2_TabActivate(container)
+function Blog2_TabActivate(obj, container)
 {
+	$$('div.tabbed_content').each(function(el) {
+		el.setStyle({'display' : 'none'});
+	});
+
+	$(container).setStyle({'display' : 'block'});
+
+	$$('li.blog_sidebar_item').each(function(el) {
+		el.removeClassName('active');
+	});
+
+	$(obj).addClassName('active');
+
+	/*
 	var fields = getElementsByClassName('tabbed_content', '*');
 	for (x=0; x<fields.length; x++)
 	{
@@ -134,6 +187,7 @@ function Blog2_TabActivate(container)
 		el.style.display = 'none';
 	}
 	document.getElementById(container).style.display = 'block';
+	*/
 }
 
 function Blog2_EditStory(entry_id)
@@ -143,16 +197,17 @@ function Blog2_EditStory(entry_id)
 	
 	var func = function() {
 		new Ajax.Updater('co_main', target_url, { onComplete: function() {
+			$('component_options').setStyle({'display' : 'none'});
 			Pico_FadeIn(obj, 0);
-			
+
+			CKEDITOR.replace('blog_story', { height: 350 });
+			CKEDITOR.replace('last_user_saved_post', { height: 275 });
+			CKEDITOR.replace('last_auto_saved_post', { height: 275 });
+
 			var func = function() {
 				Blog2_AutoSave();
 			}
-			setTimeout(func, 30000);
-			
-			CKEDITOR.replace('blog_story', { height: 275 });
-			CKEDITOR.replace('last_user_saved_post', { height: 275 });
-			CKEDITOR.replace('last_auto_saved_post', { height: 275 });
+			Blog2_AutoUpdater = new PeriodicalExecuter(func, 30);
 		}} );
 	}
 	
@@ -170,82 +225,37 @@ function Blog2_DeleteEntry(entry_id)
 	}
 }
 
-function Blog2_AddCategory()
+function Blog2_RenameCategory(component_id)
 {
-	var component_id = document.getElementById('component_id').value;
-	var new_category = prompt('Enter new category name');
-	
-	if ( (new_category != null) && (new_category.length > 0) )
+	var category_id = $('rename_category_id').value;
+	var new_name = urlencode($('rename_category').value);
+
+	var target_url = url('includes/content/blog2/submit.php?page_action=edit_category&category_id='+category_id+'&category='+new_name);
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		if (t.responseText.length > 0) {
+			alert(t.responseText);
+		}
+		else {
+			Blog2_ChooseCategories(component_id);
+		}
+	}});
+}
+
+function Blog2_DeleteCategory(component_id)
+{
+	if (confirm('Are you sure you want to delete this category?'))
 	{
-		var target_url = url('includes/content/blog2/submit.php?page_action=add_category&component_id='+component_id+'&category='+urlencode(new_category));
+		var category_id = $('delete_category_id').value;
+
+		var target_url = url('includes/content/blog2/submit.php?page_action=delete_category&category_id='+category_id);
 		new Ajax.Request(target_url, { onComplete: function(t) {
-			if (t.responseText.length > 0)
-			{
-				// error
+			if (t.responseText.length > 0) {
 				alert(t.responseText);
 			}
-			else
-			{
-				Blog2_ReloadCategory(component_id, new_category);
+			else {
+				Blog2_ChooseCategories(component_id);
 			}
-		} } );
-	}
-}
-
-function Blog2_RenameCategory()
-{
-	var component_id = document.getElementById('component_id').value;
-	var obj = document.getElementById('blog_cat_'+component_id);
-	
-	var index = obj.selectedIndex;
-	if (obj.options[index].value != 0)
-	{
-		var category_id = obj.options[index].value;
-		var text = obj.options[index].text;
-		var new_category = prompt('Enter new category name', text);
-		
-		if ( (new_category != null) && (new_category.length > 0) )
-		{
-			var target_url = url('includes/content/blog2/submit.php?page_action=edit_category&category='+urlencode(new_category)+'&category_id='+category_id);
-			new Ajax.Request(target_url, { onComplete: function(t) {
-				if (t.responseText.length > 0)
-				{
-					// error
-					alert(t.responseText);
-				}
-				else
-				{
-					Blog2_ReloadCategory(component_id, new_category);
-				}
-			} } );
-		}
-	}
-}
-
-function Blog2_DeleteCategory()
-{
-	var component_id = document.getElementById('component_id').value;
-	var obj = document.getElementById('blog_cat_'+component_id);
-	
-	var index = obj.selectedIndex;
-	if (obj.options[index].value != 0)
-	{
-		var category_id = obj.options[index].value;
-		if (confirm('Are you sure you want to delete this category?'))
-		{
-			var target_url = url('includes/content/blog2/submit.php?page_action=delete_category&category_id='+category_id);
-			new Ajax.Request(target_url, { onComplete: function(t) {
-				if (t.responseText.length > 0)
-				{
-					// error
-					alert(t.responseText);
-				}
-				else
-				{
-					Blog2_ReloadCategory(component_id);
-				}
-			} } );
-		}
+		}});
 	}
 }
 
@@ -505,6 +515,176 @@ function Blog2_UpdateTags()
 function BLog2_CloseTags()
 {
 	$('blog2_tagbox').setStyle({'display':'none'});
+}
+
+function Blog2_RestoreEntry(field)
+{
+	if (confirm('Are you sure you want to replace your current draft with this saved draft?'))
+	{
+		Blog2_TabActivate($('bes_1'), 'blog_content');
+		var saved_data = CKEDITOR.instances[field].getData();
+		CKEDITOR.instances.blog_story.setData(saved_data);
+	}
+}
+
+function Blog2_Suggest(result)
+{
+	var entry_id = document.getElementById('blog_entry_id').value;
+	var target_url = url('includes/content/blog2/submit.php?page_action=suggest&entry_id='+entry_id+'&result='+result);
+
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		var response = parseInt(t.responseText);
+		if (!isNaN(response))
+		{
+			var form = document.getElementById('blog_content_form');
+			form.elements['related'+result].value = response;
+		}
+		else
+		{
+			alert('Unable to find a related post');
+		}
+	}});
+}
 
 
+function Blog2_Preview()
+{
+	var form = document.getElementById('blog_content_form');
+	if (form)
+	{
+		form.elements.blog_entry_text.value = CKEDITOR.instances.blog_story.getData();
+		form.elements.page_action.value = 'preview';
+
+		new Ajax.Form(form, { onComplete: function(t) {
+			form.elements.page_action.value = 'edit_story';
+			
+			target_url = url(CURRENT_ALIAS + '/blog-preview');
+			window.open(target_url, '_blank');
+		}});
+	}
+}
+
+function Blog2_Filter(obj)
+{
+	var search = obj.value.toLowerCase();
+	var counter = 0;
+
+	$$('table.blog_entry_list tr').each(function(el) {
+		var title = el.getAttribute('searchtitle');
+		var compare = title.toLowerCase();
+
+		if (compare.indexOf(search) != -1)
+		{
+			var cls = (counter % 2 == 0) ? 'a' : 'b';
+			el.removeClassName('a');
+			el.removeClassName('b');
+			el.addClassName(cls);
+			counter = counter + 1;
+			el.setStyle({ display: 'table-row' });
+		}
+		else
+		{
+			el.setStyle({ display: 'none' });
+		}
+	});
+}
+
+function Blog2_InsertAuthor(obj)
+{
+	var value = obj.value;
+	if (value.length > 0)
+	{
+		$('blog_author').value = obj.value;
+		obj.value = '';
+	}
+}
+
+function Blog2_ChooseCategories(component_id)
+{
+	$('blog_category_box').innerHTML = 'Loading...';
+	var target_url = url('includes/content/blog2/submit.php?page_action=get_categories&component_id='+component_id);
+	new Ajax.Updater('blog_category_box', target_url, {onComplete: function () {
+		$('blog_category_box').setStyle({ display: 'block'});
+
+		Blog2_HighlightCategories();
+	}});
+}
+
+function Blog2_CloseCategories()
+{
+	$('blog_category_box').setStyle({ display: 'none'});
+}
+
+function Blog2_AddNewCategory(component_id)
+{
+	var category = $('new_category').value;
+	var target_url = url('includes/content/blog2/submit.php?page_action=add_category&component_id='+component_id+'&category='+urlencode(category));
+	new Ajax.Request(target_url, { onComplete: function(t) {
+		if (t.responseText.length > 0)
+		{
+			alert(t.responseText);
+		}
+		else
+		{
+			Blog2_ChooseCategories(component_id);
+		}
+	}});
+}
+
+function Blog2_HighlightCategories()
+{
+	var current_categories = $('blog_entry_categories').value;
+	var cat_array = current_categories.split(',');
+	var cat_names = new Array;
+
+	$$('#blog_category_box div.entry').each(function(el) {
+		var this_id = el.getAttribute('category_id');
+		if (Blog2_inArray(this_id, cat_array))
+		{
+			el.addClassName('active');
+			cat_names.push($(el).innerHTML);
+		}
+		else
+		{
+			el.removeClassName('active');
+		}
+	});
+
+	$('blog_category_list').innerHTML = (cat_names.length > 0) ? cat_names.join(', ') : 'None selected';
+}
+
+function Blog2_SelectCategory(obj)
+{
+	var category_id        = $(obj).getAttribute('category_id');
+	var current_categories = $('blog_entry_categories').value;
+	var cat_array          = (current_categories.length > 0) ? current_categories.split(',') : new Array;
+
+	if (Blog2_inArray(category_id, cat_array))
+	{
+		// remove it
+		var new_array = new Array;
+		while (id = cat_array.pop())
+		{
+			if ((!isNaN(id)) && (id != category_id)) 
+			{
+				new_array.push(id);
+			}
+		}
+		cat_array = new_array;
+	}
+	else
+	{
+		// add it
+		cat_array.push(category_id);
+	}
+
+	$('blog_entry_categories').value = cat_array.join(',');
+	Blog2_HighlightCategories();
+}
+
+function Blog2_LoadRename(obj)
+{
+	var val = obj.value;
+	var txt = obj.options[obj.selectedIndex].text;
+	$('rename_category').value = txt;
 }

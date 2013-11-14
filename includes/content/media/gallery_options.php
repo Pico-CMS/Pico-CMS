@@ -12,7 +12,7 @@ if (!isset($settings))
 }
 
 $table = '';
-
+$coutner = 0;
 foreach ($settings as $key=>$data)
 {
 	if ($data['type'] == 'text')
@@ -45,16 +45,21 @@ foreach ($settings as $key=>$data)
 	}
 	else
 	{
-		$table .= '<tr><td>'.$data['name'].'</td><td>'.$field.'</td></tr>';
+		$class = ($counter % 2 == 0) ? 'a' : 'b';
+		$counter++;
+		$table .= '<tr class="'.$class.'"><td>'.$data['name'].'</td><td>'.$field.'</td></tr>';
 	}
 }
 
 ?>
-<form method="post" action="<?=$body->url('includes/content/media/submit.php')?>" onsubmit="MG_UpdateOptions(this); return false" />
-	<input type="hidden" name="component_id" value="<?=$component_id?>" />
-	<input type="hidden" name="page_action" value="update_options" />
-	<table border="0" cellpadding="2" cellspacing="1">
-	<?=$table?>
-	</table>
-	<input type="submit" value="Update" name="submitbtn" />
-</form>
+<div class="ap_overflow">
+	<h3>Gallery Settings</h3>
+	<form method="post" action="<?=$body->url('includes/content/media/submit.php')?>" onsubmit="MG_UpdateOptions(this); return false" />
+		<input type="hidden" name="component_id" value="<?=$component_id?>" />
+		<input type="hidden" name="page_action" value="update_options" />
+		<table border="0" cellpadding="2" cellspacing="1" class="admin_list">
+		<?=$table?>
+		</table>
+		<input class="co_button co_button1" type="submit" value="Update" name="submitbtn" />
+	</form>
+</div>

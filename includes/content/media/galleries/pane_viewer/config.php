@@ -4,7 +4,7 @@
 
 $options = array();
 $options['type'] = 'Pane Viewer'; // what you call your content
-$options['description']  = 'Simple image viewer with 2 columns of images on the right side'; // a brief description of what your content does, any restrictions, etc
+$options['text_description']  = 'Simple image viewer with 2 columns of images on the right side'; // a brief description of what your content does, any restrictions, etc
 $options['img_width']    = 310;
 $options['img_height']   = 211;
 $options['swf_width']    = 478;

@@ -70,14 +70,14 @@ Class CFLayout
 		switch ($field_type)
 		{
 			case 'text':
-				$field = '<input type="text" name="fields['.$counter.']" value="'.$value.'" />';
+				$field = '<input class="text" type="text" name="fields['.$counter.']" value="'.$value.'" />';
 				break;
 			case 'textarea':
 				$field = '<textarea name="fields['.$counter.']">'.$value.'</textarea>';
 				break;
 			case 'checkbox':
 				$field = '<input type="hidden" name="fields['.$counter.']" value="off" />
-				<input type="checkbox" value="on" name="fields['.$counter.']" '.(($value == 'on')?'checked="checked"':'').' />';
+				<input type="checkbox" class="checkbox" value="on" name="fields['.$counter.']" '.(($value == 'on')?'checked="checked"':'').' />';
 				break;
 			case 'check_list':
 				$field   = '<input type="hidden" name="fields['.$counter.'][]" value="foo" />';
@@ -85,7 +85,7 @@ Class CFLayout
 				for ($x = 0; $x < sizeof($options); $x++)
 				{
 					$option = $options[$x];
-					$field .= '<input type="checkbox" name="fields['.$counter.'][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value)) ) ? 'checked="checked"':'').' />'.$option.'<br />';
+					$field .= '<input type="checkbox" class="checkbox checklist" name="fields['.$counter.'][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value)) ) ? 'checked="checked"':'').' />'.$option.'<br />';
 				}
 				break;
 			case 'double_list':
@@ -100,9 +100,9 @@ Class CFLayout
 				{
 					$option = $options[$x];
 					$field .= '<tr><td>';
-					$field .= '<input type="checkbox" name="fields['.$counter.'][1][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value[1])) ) ? 'checked="checked"':'').' />'.$option.'<br />';
+					$field .= '<input type="checkbox" class="checkbox double_list left" name="fields['.$counter.'][1][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value[1])) ) ? 'checked="checked"':'').' />'.$option.'<br />';
 					$field .= '</td><td>';
-					$field .= '<input type="checkbox" name="fields['.$counter.'][2][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value[2])) ) ? 'checked="checked"':'').' />'.$option.'<br />';
+					$field .= '<input type="checkbox" class="checkbox double_list right" name="fields['.$counter.'][2][]" value="'.$option.'" '. (( (is_array($value)) and(in_array($option, $value[2])) ) ? 'checked="checked"':'').' />'.$option.'<br />';
 					$field .= '</td></tr>';
 				}
 				$field .= '</table>';
@@ -113,7 +113,7 @@ Class CFLayout
 			case 'terms':
 				$_caption = ''; // handle our own captcha
 				$field = '<textarea class="terms" readonly="readonly">'.implode("\n", $options).'</textarea><br />
-				<input type="checkbox" name="fields['.$counter.']" value="true" /> <div class="terms_caption">'.$caption.'</div>';
+				<input type="checkbox" name="fields['.$counter.']" class="checkbox terms" value="true" /> <div class="terms_caption">'.$caption.'</div>';
 				break;
 			case 'group':
 			case 'info':
@@ -141,11 +141,11 @@ Class CFLayout
 					$field .= <<<HTML
 <tr class="$class">
 	<td class="header">$info<td>
-	<td class="num">1.</td><td class="button"><input type="radio" name="fields[$counter][$x]" value="1" $c1 /></td>
-	<td class="num">2.</td><td class="button"><input type="radio" name="fields[$counter][$x]" value="2" $c2 /></td>
-	<td class="num">3.</td><td class="button"><input type="radio" name="fields[$counter][$x]" value="3" $c3 /></td>
-	<td class="num">4.</td><td class="button"><input type="radio" name="fields[$counter][$x]" value="4" $c4 /></td>
-	<td class="num">5.</td><td class="button"><input type="radio" name="fields[$counter][$x]" value="5" $c5 /></td>
+	<td class="num">1.</td><td class="button"><input type="radio" class="radio" name="fields[$counter][$x]" value="1" $c1 /></td>
+	<td class="num">2.</td><td class="button"><input type="radio" class="radio" name="fields[$counter][$x]" value="2" $c2 /></td>
+	<td class="num">3.</td><td class="button"><input type="radio" class="radio" name="fields[$counter][$x]" value="3" $c3 /></td>
+	<td class="num">4.</td><td class="button"><input type="radio" class="radio" name="fields[$counter][$x]" value="4" $c4 /></td>
+	<td class="num">5.</td><td class="button"><input type="radio" class="radio" name="fields[$counter][$x]" value="5" $c5 /></td>
 </tr>
 HTML;
 				}
@@ -190,7 +190,7 @@ HTML;
 					// get all values in the database with field_name
 					$directory_table = DB_PREFIX . 'directory_' . $dir_source;
 					$asc_or_desc = (in_array($directory_options['asc_or_desc'], array('ASC', 'DESC'))) ? $directory_options['asc_or_desc'] : 'ASC';
-					$results = $db->force_multi_assoc('SELECT `entry_id`, `'.$field_name.'` FROM `'.$directory_table.'` ORDER BY `'.$directory_options['browse_by'].'` ' . $asc_or_desc);
+					$results = $db->force_multi_assoc('SELECT * FROM `'.$directory_table.'` ORDER BY `'.$directory_options['browse_by'].'` ' . $asc_or_desc);
 
 					if (is_array($results))
 					{
@@ -199,6 +199,8 @@ HTML;
 						{
 							$val = str_replace('"', '\\"', $result[$field_name]);
 							$selected = '';
+
+							global $params;
 							
 							// can use "link" or the field's name in the URL we are making to auto select
 							if (($params[1] == 'link') or ($params[1] == $field_name))
@@ -215,8 +217,20 @@ HTML;
 									$selected = 'selected="selected"';
 								}
 							}
+
+							$shown = true;
+							$controlfields = array('published', 'Published', 'shown', 'Shown');
+
+							foreach ($controlfields as $cf) 
+							{
+								if ((isset($result[$cf])) and (strtolower($result[$cf]) == 'no')) { $shown = false; }
+							}
 							
-							$field .= '<option value="'.$val.'" '.$selected.'>'.$result[$field_name].'</option>';
+							if ($shown) 
+							{
+								$field .= '<option value="'.$val.'" '.$selected.'>'.$result[$field_name].'</option>';
+							}
+							
 						}
 						$field .= '</select>';
 					}

@@ -112,8 +112,10 @@ function Blognav2_ShowSection($blog_id, $section, $label, $settings)
 		{
 			foreach ($categories as $entry)
 			{
-				$check = $db->result('SELECT count(*) FROM `'.$blog_entries.'` WHERE `category`=? AND `published`=1 AND `scheduled_date` <= ?', $entry['category_id'], time());
-				if ( (int) $check > 0)
+				$check = sizeof(Blog2_FindPostsByCategory($blog_id, $entry['category_id']));
+
+				//$check = $db->result('SELECT count(*) FROM `'.$blog_entries.'` WHERE `category`=? AND `published`=1 AND `scheduled_date` <= ?', $entry['category_id'], time());
+				if ($check > 0)
 				{
 					$link = $body->url($blog_alias . '/category/' . $entry['alias']);
 					$all_categories[] = array(
@@ -126,6 +128,7 @@ function Blognav2_ShowSection($blog_id, $section, $label, $settings)
 		}
 		// see if we have uncategoried...
 		
+		/*
 		$check = $db->result('SELECT count(*) FROM `'.$blog_entries.'` WHERE `category`=0 AND `published`=? AND `scheduled_date` <= ? AND `component_id`=?', 1, time(), $blog_id);
 		if ( (int) $check > 0)
 		{
@@ -134,7 +137,7 @@ function Blognav2_ShowSection($blog_id, $section, $label, $settings)
 				'link'=>$link,
 				'title'=>'Uncategorized'
 			);
-		}
+		}*/
 		
 		if ($settings['categories_view'] == 'dropdown')
 		{
@@ -364,15 +367,15 @@ function Blognav2_ShowSection($blog_id, $section, $label, $settings)
 		// should already be sorted
 		if (sizeof($include) > 0)
 		{
-			if ($settings['latest_posts_view'] == 'dropdown')
+			if ($settings['yearly_view'] == 'dropdown')
 			{
 				$section_html .= '<select onchange="Blog_ShowLink(this)">';
-				$section_html .= '<option value=""></option>';
+				$section_html .= '<option value="">Choose By Year</option>';
 				foreach($include as $date)
 				{
 					$year  = date('Y', $date);
 					$link = $body->url($blog_alias . '/year/' . $year);
-					$section_html .= '<option value="'.$link.'">'.$entry['title'].'</option>';
+					$section_html .= '<option value="'.$link.'">'.$year.'</option>';
 				}
 				$section_html .= '</select>';
 			}

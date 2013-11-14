@@ -8,6 +8,12 @@ $additional_info = $db->result('SELECT `additional_info` FROM `'.DB_CONTENT.'` W
 $settings        = unserialize($additional_info);
 if (!is_array($settings)) { $settings = array(); }
 
+if ($settings['hide_on_subpages'] == 1)
+{
+	global $params;
+	if ((isset($params[1])) and (strlen($params[1]) > 0)) { return; }
+}
+
 $blog_page     = $db->result('SELECT `page_id` FROM `'.DB_CONTENT_LINKS.'` WHERE `component_id`=?', $settings['blog']);
 $blog_alias    = $db->result('SELECT `alias` FROM `'.DB_PAGES_TABLE.'` WHERE `page_id`=?', $blog_page); 
 $layout        = $settings['layout'];

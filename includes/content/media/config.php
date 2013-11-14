@@ -10,7 +10,7 @@ $options['admin_js'] = 'admin.js'; // same as static, but if logged in as modera
 $options['admin_css'] = 'admin.css'; // same as static, but if logged in as moderator or higher
 $options['delete_file'] = ''; // file that will be called in addition to removing the component from the content-links table
 $options['install_file'] = 'install.php'; // file that will be called after initally installing the component (good time to gather required information for your component, or create an SQL table if needed)
-$options['on_edit_load'] = ''; // javascript code that will happen after load is don
+$options['on_edit_load'] = 'MG_Load()'; // javascript code that will happen after load is don
 $options['on_ap_close'] = 'MG_Close()'; // javascript code that will happen after load is don
 $options['edit_options'] = array(
 	array(

@@ -43,47 +43,7 @@ $image_settings = unserialize($options['image_settings']);*/
 	<td colspan="2">
 		<h3>Layout Settings</h3>
 		<p>You can use the following variables in your layout, hover over a variable for more info</p>
-		<ul class="variable_list">
-			<li>{TITLE}
-				<div class="variable_tooltip">The title of the post</div></li>
-			<li>{SECONDARY_TITLE}
-				<div class="variable_tooltip">Sub-title of the post</div></li>
-			<li>{LINK,linked text}
-				<div class="variable_tooltip">Link to an individual post, displayed as "linked text"<br />ex: {LINK,{TITLE}} or {LINK,Read More}</div></li>
-			<li>{STORY,num words}
-				<div class="variable_tooltip">Main post text, with optional number of words</div></li>
-			<li>{ID}
-				<div class="variable_tooltip">Internal Post ID</div></li>
-			<li>{CATEGORY_LINK,linked text}
-				<div class="variable_tooltip">Category link, displayed as "linked text"<br />ex: {LINK,{CATEGORY_NAME}}</div></li>
-			<li>{CATEGORY_NAME}
-				<div class="variable_tooltip">Category Name</div></li>
-			<li>{TAGS}
-				<div class="variable_tooltip">Tag link list</div></li>
-			<li>{NUM_TAGS}
-				<div class="variable_tooltip">Number of tags for a given post</div></li>
-			<li>{RELATED}
-				<div class="variable_tooltip">A linked list of related posts to this post</div></li>
-			<li>{COMMENTS_ENABLED}
-				<div class="variable_tooltip">TRUE/FALSE for if comments are enabled<br />ex: {if:COMMENTS_ENABLED}...{/if}</div></li>
-			<li>{COMMENTS}
-				<div class="variable_tooltip">Post comments placement</div></li>
-			<li>{SHARETHIS}
-				<div class="variable_tooltip">Will display the "Share This" code configured in Pico settings</div></li>
-			<li>{IMAGE,width,height,display mode}
-				<div class="variable_tooltip">Will display the image for the post, at a specified width, height, and mode.
-				<ul>
-					<li>Width - Integer</li>
-					<li>Height - Integer</li>
-					<li>Display Mode - "pad" or "crop"</li>
-					<li>If width or height are zero, the image will be resized to match that width and height. 
-					If width and height are omitted or both zero, the original image size will be displayed;</li>
-				</ul>
-				<br />
-				ex: {IMAGE,100,50,pad} will show an image that's 100x50 with display mode of "pad"
-				</div>
-			</li>
-		</ul>
+		<?=Blog2_GetLayoutDescHTML()?>
 	</td>
 </tr>
 <tr class="b">
@@ -141,6 +101,12 @@ $image_settings = unserialize($options['image_settings']);*/
 			<td><?=Blog2_LayoutSection('search', $settings['section_layout']['search'])?></td>
 			<td># entries: <input size="2" type="text" name="settings[section_show][search]" value="<?=$settings['section_show']['search']?>" /></td>
 			<td><?=Blog2_DisplayOption('search', $settings['display_mode']['search'])?></td>
+		</tr>
+		<tr class="a">
+			<td>Yearly</td>
+			<td><?=Blog2_LayoutSection('yearly', $settings['section_layout']['yearly'])?></td>
+			<td># entries: <input size="2" type="text" name="settings[section_show][yearly]" value="<?=$settings['section_show']['yearly']?>" /></td>
+			<td><?=Blog2_DisplayOption('yearly', $settings['display_mode']['yearly'])?></td>
 		</tr>
 		</table>
 	</td>
@@ -202,6 +168,6 @@ $image_settings = unserialize($options['image_settings']);*/
 </tr>
 </table>
 
-<input type="submit" name="submitbtn" value="Update" />
+<input class="co_button co_button1" type="submit" name="submitbtn" value="Update" />
 </form>
 </div>

@@ -17,6 +17,8 @@ class Body
 	var $title_pieces = array(); // array to help build <title>
 	var $social_title = ''; // variables for posting to social media
 	var $social_desc  = '';
+	var $meta_keywords = array();
+	var $meta_desc = '';
 	
 	public function url($url)
 	{
@@ -98,5 +100,30 @@ class Body
 	{
 		$this->social_title = $title;
 		$this->social_desc = $desc;
+	}
+
+	public function meta_description($text, $overwrite = false)
+	{
+		$new_desc = ($overwrite) ? '' : $this->meta_desc;
+		$new_desc .= $text;
+
+		$this->meta_desc = $new_desc;
+	}
+
+	public function meta_keywords($keywords, $overwrite = false)
+	{
+		$new_keywords = ($overwrite) ? array() : $this->meta_keywords;
+		
+		while ($keyword = array_shift($keywords))
+		{
+			$new_keywords[] = $keywords;
+		}
+
+		$this->meta_keywords = $new_keywords;
+	}
+
+	public function get_meta_keywords()
+	{
+		return implode(', ', $this->meta_keywords);
 	}
 }

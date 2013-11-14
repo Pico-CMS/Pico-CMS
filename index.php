@@ -138,6 +138,10 @@ if (strlen($body->social_desc) > 0)
 	$social_html .= "\n\t" . '<meta property="og:description" content="'.$d.'" />';
 }
 
+$meta_desc     = (strlen($body->meta_desc) > 0) ? $body->meta_desc : $page_details['description'];
+$meta_keywords = (strlen($body->get_meta_keywords()) > 0) ? $body->get_meta_keywords() : $page_details['keywords'];
+
+
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -159,11 +163,11 @@ if (strlen($body->social_desc) > 0)
 	</script>
 	<script type="text/javascript" src="<?=$body->url('site/javascript.php' . ((USER_ACCESS > 1) ? '?mode=reload' : ''))?>"></script>
 	<?php
-	if (strlen($page_details['description']) > 0) {
-		echo '<meta name="description" content="'.$page_details['description'].'" />' . "\n";
+	if (strlen($meta_desc) > 0) {
+		echo '<meta name="description" content="'.$meta_desc.'" />' . "\n";
 	}
-	if (strlen($page_details['keywords']) > 0) {
-		echo '<meta name="keywords" content="'.$page_details['keywords'].'" />' . "\n";
+	if (strlen($meta_keywords) > 0) {
+		echo '<meta name="keywords" content="'.$meta_keywords.'" />' . "\n";
 	}
 	?>
 	<?=Pico_Setting('html_head')?>

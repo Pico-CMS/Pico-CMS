@@ -17,7 +17,7 @@ $blog_comments   = DB_PREFIX . 'pico_blog_comments';
 
 require_once('includes/content/blog2/check_database.php'); // make sure we have the latest database shtuff
 
-$blog_posts = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? ORDER BY `date` DESC', $component_id);
+$blog_posts = $db->force_multi_assoc('SELECT * FROM `'.$blog_entries.'` WHERE `component_id`=? AND `post_id` > 0 ORDER BY `date` DESC', $component_id);
 $blog_op = '';
 if (is_array($blog_posts))
 {
@@ -33,7 +33,7 @@ if (is_array($blog_posts))
 		
 		$extra = ($entry['published'] == 0) ? '<span style="font-style: italic"> - unpublished</span>' : '';
 		
-		$blog_op .= '<tr class="'.$class.'">';
+		$blog_op .= '<tr class="'.$class.'" searchtitle="'.$entry['title'].'">';
 		$blog_op .= '<td class="title">'.$entry['title'].$extra.'</td>';
 		$blog_op .= '<td class="date">'.date('m/d/Y', $entry['date']).'</td>';
 		$blog_op .= '<td class="actions">'.$edit.$delete.'</td>';
@@ -49,6 +49,13 @@ else
 <input type="hidden" id="component_id" value="<?=$component_id?>" />
 <div class="blog_pad">
 	<div class="blog_home">
+		<h1>All Posts</h1>
+		<div class="blog_existing">
+			<?=$blog_op?>
+		</div>
+		Filter by title: <input type="text" class="ap_text" onkeyup="Blog2_Filter(this)" />
+
+		<p class="blog_or">-or-</p>
 		<h3 class="blog_choice">Start a new post</h3>
 
 		<form method="post" action="<?=$body->url('includes/content/blog2/submit.php')?>" onsubmit="Blog2_NewStory(this); return false" style="height: auto">
@@ -66,11 +73,5 @@ else
 		</table>
 		<input type="submit" value="Start new post" />
 		</form>
-
-		<p class="blog_or">-or-</p>
-		<h3 class="blog_choice">Edit an existing post</h3>
-		<div class="blog_existing">
-			<?=$blog_op?>
-		</div>
 	</div>
 </div>

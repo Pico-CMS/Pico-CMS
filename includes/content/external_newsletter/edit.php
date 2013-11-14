@@ -31,6 +31,7 @@ if (!is_array($lists)) { $lists = array(); }
 				<option <?=($options['newsletter_portal'] == 'mc') ? 'selected="selected"' : ''?> value="mc">Mail Chimp</option>
 				<option <?=($options['newsletter_portal'] == 'cc') ? 'selected="selected"' : ''?> value="cc">Constant Contact</option>
 				<option <?=($options['newsletter_portal'] == 'ic') ? 'selected="selected"' : ''?> value="ic">iContact</option>
+				<option <?=($options['newsletter_portal'] == 'em') ? 'selected="selected"' : ''?> value="em">Email</option>
 			</select>
 		</td>
 	</tr>

@@ -125,6 +125,7 @@ if ($action == 'signup')
 	}
 	
 	$lists = $options['lists'];
+	$user_lists = array();
 	for ($x = 0; $x < sizeof($lists); $x++)
 	{
 		if (sizeof($lists) == 1)
@@ -182,6 +183,29 @@ if ($action == 'signup')
 				IContactSubscribe($account_id, $options['api_key'], $options['api_username'], $options['api_password'], $email, $list_number, &$result_str);
 			}
 		}
+
+		if ($options['newsletter_portal'] == 'em')
+		{
+			$user_lists[] = $list_number;
+
+			
+		}
+	}
+
+	if (($options['newsletter_portal'] == 'em') and (sizeof($user_lists) > 0))
+	{
+		$to      = $options['address'];
+		$subject = 'Newsletter Signup';
+		$name    = $_SERVER['SERVER_NAME'];
+		$message = "Someone has signed up for your newsletter on $name:\n";
+		if (strlen($first_name) > 0) { $message .= "First Name: $first_name\n"; }
+		if (strlen($last_name) > 0) { $message .= "Last Name: $last_name\n"; }
+		$message .= "Email Address: $email\n";
+
+		$_lists = implode(', ', $user_lists);
+		$message .= "Lists: $_lists\n";
+
+		Pico_SendUserEmail($to, $subject, $message, FALSE, $email);
 	}
 
 	$complete_text = (strlen($options['signup_complete_text']) > 0) ? $options['signup_complete_text'] : 'Signup Complete!';
