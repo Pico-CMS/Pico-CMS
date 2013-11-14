@@ -81,6 +81,7 @@ else
 		$parts = explode('/', $keep); // Break into an array
 		// Lets look at the array of items we have:
 		$params = array();
+
 		foreach ($parts as $part)
 		{
 			if (strlen($part) > 0)
@@ -119,7 +120,12 @@ else
 				else
 				{
 					// this is in case core gets included
-					$request = trim($_SERVER['REQUEST_URI'], '/');
+					$request = $_SERVER['REQUEST_URI'];
+					if (substr($request, 0, strlen($config['domain_path'])) == $config['domain_path'])
+					{
+						$request = substr($request, strlen($config['domain_path']));
+					}
+
 					list($path, $foo) = explode('?', $request);
 
 					if ((!is_file($path)) and (!in_array($path, $reserved_page_names)))
@@ -135,7 +141,7 @@ else
 						{
 							// default headers
 							header('HTTP/1.0 404 Not Found');
-						    echo "<h1>404 Not Found</h1>";
+						    echo "<h1>404 Not Found ($path)</h1>";
 						    echo "The page that you have requested could not be found.";
 						    exit();
 						}
