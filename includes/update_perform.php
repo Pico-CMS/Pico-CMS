@@ -309,7 +309,7 @@ function Pico_UpdateCoreFiles($ftp)
 				}
 				else
 				{
-					$parts = explode('/', $file);
+					$parts = explode('/', $filename);
 					array_pop($parts);
 					$parent_folder = implode('/', $parts);
 				}
